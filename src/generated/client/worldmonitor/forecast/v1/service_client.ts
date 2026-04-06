@@ -139,6 +139,16 @@ export interface GetSimulationPackageResponse {
   error: string;
 }
 
+export interface TriggerSimulationRequest {
+  runId: string;
+}
+
+export interface TriggerSimulationResponse {
+  queued: boolean;
+  runId: string;
+  reason: string;
+}
+
 export interface GetSimulationOutcomeRequest {
   runId: string;
 }
@@ -277,6 +287,30 @@ export class ForecastServiceClient {
     }
 
     return await resp.json() as GetSimulationOutcomeResponse;
+  }
+
+  async triggerSimulation(req: TriggerSimulationRequest, options?: ForecastServiceCallOptions): Promise<TriggerSimulationResponse> {
+    const path = "/api/forecast/v1/trigger-simulation";
+    const url = this.baseURL + path;
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...this.defaultHeaders,
+      ...options?.headers,
+    };
+
+    const resp = await this.fetchFn(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ runId: req.runId || "" }),
+      signal: options?.signal,
+    });
+
+    if (!resp.ok) {
+      return this.handleError(resp);
+    }
+
+    return await resp.json() as TriggerSimulationResponse;
   }
 
   private async handleError(resp: Response): Promise<never> {

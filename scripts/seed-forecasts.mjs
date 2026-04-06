@@ -4717,13 +4717,19 @@ function buildImpactExpansionDebugPayload(data = {}, worldState = null, runId = 
     hypothesisValidation,
     convergence,
     // gateDetails records the active thresholds at time of execution for self-documenting artifacts.
-    gateDetails: {
-      secondOrderMappedFloor: 0.58,
-      secondOrderMultiplier: 0.88,
-      pathScoreThreshold: 0.50,
-      acceptanceThreshold: 0.50,
-      refinementQualityThreshold: 0.80,
-    },
+    gateDetails: (() => {
+      const second = getImpactValidationFloors('second_order');
+      const third = getImpactValidationFloors('third_order');
+      return {
+        secondOrderMappedFloor: second.mapped,
+        secondOrderMultiplier: second.multiplier,
+        thirdOrderMappedFloor: third.mapped,
+        thirdOrderMultiplier: third.multiplier,
+        pathScoreThreshold: 0.50,
+        acceptanceThreshold: 0.50,
+        refinementQualityThreshold: 0.80,
+      };
+    })(),
     selectedPaths: (data?.deepPathEvaluation?.selectedPaths || []).map(summarizeImpactPathScore).filter(Boolean),
     rejectedPaths: (data?.deepPathEvaluation?.rejectedPaths || []).map(summarizeImpactPathScore).filter(Boolean),
     simulationEvidence: data?.simulationEvidence || null,
@@ -12413,6 +12419,9 @@ function mapActorCategoryToEntityClass(category, domains = []) {
   return 'state_actor';
 }
 
+const slugify = (s) => s.toLowerCase().replace(/\W+/g, '_');
+const MAX_SEED_SUMMARY = 200;
+
 function inferEntityClassFromName(name) {
   const s = name.toLowerCase();
   if (/\b(military|army|navy|air\s+force|national\s+guard|houthi|irgc|revolutionary\s+guard|armed\s+forces?)\b/.test(s)) return 'military_or_security_actor';
@@ -12483,7 +12492,7 @@ function buildSimulationPackageEntities(selectedTheaters, candidates, actorRegis
     for (const actorName of (candidate.stateSummary?.actors || [])) {
       const key = `su:${actorName}:${candidate.candidateStateId}`;
       addEntity(key, {
-        entityId: `${candidate.candidateStateId}:${actorName.toLowerCase().replace(/\W+/g, '_')}`,
+        entityId: `${candidate.candidateStateId}:${slugify(actorName)}`,
         name: actorName,
         class: inferEntityClassFromName(actorName),
         region: candidate.dominantRegion || '',
@@ -12496,12 +12505,15 @@ function buildSimulationPackageEntities(selectedTheaters, candidates, actorRegis
 
     for (const entry of (candidate.evidenceTable || [])) {
       if (entry.kind !== 'actor') continue;
-      const match = entry.text.match(/^(.+?)\s+remain the lead actors/i);
-      if (!match) continue;
+      const match = entry.text.match(/^(.+?)\s+(?:remain|are|continue as) the (?:lead|primary|key) actors/i);
+      if (!match) {
+        console.debug('[SimulationPackage] evidence actor regex miss', entry.text.slice(0, 80));
+        continue;
+      }
       for (const name of match[1].split(/,\s*/).filter(Boolean)) {
         const key = `ev:${name}:${candidate.candidateStateId}`;
         addEntity(key, {
-          entityId: `${candidate.candidateStateId}:${name.toLowerCase().replace(/\W+/g, '_')}`,
+          entityId: `${candidate.candidateStateId}:${slugify(name)}`,
           name,
           class: inferEntityClassFromName(name),
           region: candidate.dominantRegion || '',
@@ -12517,7 +12529,7 @@ function buildSimulationPackageEntities(selectedTheaters, candidates, actorRegis
   if (seen.size === 0) {
     for (const theater of selectedTheaters) {
       addEntity(`fallback:state:${theater.theaterId}`, {
-        entityId: `state:${theater.dominantRegion.toLowerCase().replace(/\W+/g, '_')}`,
+        entityId: `state:${slugify(theater.dominantRegion)}`,
         name: `${theater.dominantRegion} state authority`,
         class: 'state_actor',
         region: theater.dominantRegion,
@@ -12527,7 +12539,7 @@ function buildSimulationPackageEntities(selectedTheaters, candidates, actorRegis
         relevanceToTheater: theater.theaterId,
       });
       addEntity(`fallback:logistics:${theater.theaterId}`, {
-        entityId: `logistics:${(theater.routeFacilityKey || theater.dominantRegion).toLowerCase().replace(/\W+/g, '_')}`,
+        entityId: `logistics:${slugify(theater.routeFacilityKey || theater.dominantRegion)}`,
         name: `${theater.routeFacilityKey || theater.dominantRegion} logistics operators`,
         class: 'logistics_operator',
         region: theater.dominantRegion,
@@ -12552,12 +12564,12 @@ function buildSimulationPackageEntities(selectedTheaters, candidates, actorRegis
   return [...seen.values()].slice(0, 20);
 }
 
-function buildSimulationPackageEventSeeds(selectedTheaters, candidates) {
+function buildSimulationPackageEventSeeds(selectedTheaters, candidates, candidateById) {
   const seeds = [];
   let idx = 0;
 
   for (const theater of selectedTheaters) {
-    const candidate = candidates.find((c) => c.candidateStateId === theater.candidateStateId);
+    const candidate = candidateById?.get(theater.candidateStateId) ?? candidates.find((c) => c.candidateStateId === theater.candidateStateId);
     if (!candidate) continue;
 
     for (const entry of (candidate.evidenceTable || [])) {
@@ -12566,7 +12578,7 @@ function buildSimulationPackageEventSeeds(selectedTheaters, candidates) {
           seedId: `seed-${++idx}`,
           theaterId: theater.theaterId,
           type: 'live_news',
-          summary: sanitizeForPrompt(entry.text).slice(0, 200),
+          summary: sanitizeForPrompt(entry.text).slice(0, MAX_SEED_SUMMARY),
           evidenceRefs: [entry.key],
           timing: 'T+0h',
           strength: +Math.min(0.95, (candidate.rankingScore || 0.5)).toFixed(3),
@@ -12576,7 +12588,7 @@ function buildSimulationPackageEventSeeds(selectedTheaters, candidates) {
           seedId: `seed-${++idx}`,
           theaterId: theater.theaterId,
           type: 'observed_disruption',
-          summary: sanitizeForPrompt(entry.text).slice(0, 200),
+          summary: sanitizeForPrompt(entry.text).slice(0, MAX_SEED_SUMMARY),
           evidenceRefs: [entry.key],
           timing: 'T+0h',
           strength: +Math.min(0.9, (Number(candidate.marketContext?.criticalSignalLift || 0) + 0.3)).toFixed(3),
@@ -12591,7 +12603,7 @@ function buildSimulationPackageEventSeeds(selectedTheaters, candidates) {
           seedId: `seed-${++idx}`,
           theaterId: theater.theaterId,
           type: 'observed_disruption',
-          summary: sanitizeForPrompt(fallback.text).slice(0, 200),
+          summary: sanitizeForPrompt(fallback.text).slice(0, MAX_SEED_SUMMARY),
           evidenceRefs: [fallback.key],
           timing: 'T+0h',
           strength: +(candidate.rankingScore || 0.4).toFixed(3),
@@ -12603,12 +12615,12 @@ function buildSimulationPackageEventSeeds(selectedTheaters, candidates) {
   return seeds;
 }
 
-function buildSimulationPackageConstraints(selectedTheaters, candidates) {
+function buildSimulationPackageConstraints(selectedTheaters, candidates, candidateById) {
   const result = {};
   let idx = 0;
 
   for (const theater of selectedTheaters) {
-    const candidate = candidates.find((c) => c.candidateStateId === theater.candidateStateId);
+    const candidate = candidateById?.get(theater.candidateStateId) ?? candidates.find((c) => c.candidateStateId === theater.candidateStateId);
     if (!candidate) continue;
     const src = `candidate:${theater.candidateStateId}`;
     const theaterConstraints = [];
@@ -12747,10 +12759,10 @@ function buildEvalTargetQuestions(theater, macroRegion) {
   ];
 }
 
-function buildSimulationPackageEvaluationTargets(selectedTheaters, candidates) {
+function buildSimulationPackageEvaluationTargets(selectedTheaters, candidates, candidateById) {
   const result = {};
   for (const theater of selectedTheaters) {
-    const candidate = candidates.find((c) => c.candidateStateId === theater.candidateStateId);
+    const candidate = candidateById?.get(theater.candidateStateId) ?? candidates.find((c) => c.candidateStateId === theater.candidateStateId);
     if (!candidate) {
       console.warn(`[SimulationPackage] No candidate for theaterId=${theater.theaterId} (evaluationTargets)`);
     }
@@ -12780,7 +12792,12 @@ function buildSimulationStructuralWorld(selectedTheaters, { stateUnits, worldSig
 
   const selectedStateUnits = (stateUnits || []).filter((u) => theaterStateIds.has(u.id));
   const touchingSignals = (worldSignals?.signals || [])
-    .filter((s) => theaterRegions.has(s.region) || theaterRegions.has(s.macroRegion) || theaterStateIds.has(s.situationId))
+    .filter((s) => {
+      const sigMacro = s.macroRegion;
+      return theaterRegions.has(s.region)
+        || (Array.isArray(sigMacro) ? sigMacro.some((r) => theaterRegions.has(r)) : theaterRegions.has(sigMacro))
+        || theaterStateIds.has(s.situationId);
+    })
     .slice(0, 20);
   const touchingTransmissionEdges = (marketTransmission?.edges || [])
     .filter((e) => theaterStateIds.has(e.sourceSituationId) || theaterStateIds.has(e.targetSituationId))
@@ -12840,10 +12857,12 @@ function buildSimulationPackageFromDeepSnapshot(snapshot, priorWorldState = null
     )].slice(0, 12),
   }));
 
+  const candidateById = new Map(top.map((c) => [c.candidateStateId, c]));
+
   const simulationRequirement = Object.fromEntries(
     selectedTheaters.map((theater) => [
       theater.theaterId,
-      buildSimulationRequirementText(theater, top.find((c) => c.candidateStateId === theater.candidateStateId)),
+      buildSimulationRequirementText(theater, candidateById.get(theater.candidateStateId)),
     ]),
   );
 
@@ -12869,9 +12888,9 @@ function buildSimulationPackageFromDeepSnapshot(snapshot, priorWorldState = null
       situationFamilies,
     }),
     entities: buildSimulationPackageEntities(selectedTheaters, top, actorRegistry),
-    eventSeeds: buildSimulationPackageEventSeeds(selectedTheaters, top),
-    constraints: buildSimulationPackageConstraints(selectedTheaters, top),
-    evaluationTargets: buildSimulationPackageEvaluationTargets(selectedTheaters, top),
+    eventSeeds: buildSimulationPackageEventSeeds(selectedTheaters, top, candidateById),
+    constraints: buildSimulationPackageConstraints(selectedTheaters, top, candidateById),
+    evaluationTargets: buildSimulationPackageEvaluationTargets(selectedTheaters, top, candidateById),
   };
 }
 
@@ -13994,6 +14013,7 @@ function getForecastLlmCallOptions(stage = 'default') {
   const criticalProviderOrder = parseForecastProviderOrder(process.env.FORECAST_LLM_CRITICAL_PROVIDER_ORDER);
   const impactProviderOrder = parseForecastProviderOrder(process.env.FORECAST_LLM_IMPACT_PROVIDER_ORDER);
   const marketImplicationsProviderOrder = parseForecastProviderOrder(process.env.FORECAST_LLM_MARKET_IMPLICATIONS_PROVIDER_ORDER);
+  const simulationProviderOrder = parseForecastProviderOrder(process.env.FORECAST_LLM_SIMULATION_PROVIDER_ORDER);
   const providerOrder = stage === 'combined'
     ? (combinedProviderOrder || globalProviderOrder || defaultProviderOrder)
     : stage === 'critical_signals'
@@ -14002,6 +14022,8 @@ function getForecastLlmCallOptions(stage = 'default') {
         ? (impactProviderOrder || globalProviderOrder || defaultProviderOrder)
       : stage === 'market_implications'
         ? (marketImplicationsProviderOrder || globalProviderOrder || defaultProviderOrder)
+      : stage === 'simulation_round_1' || stage === 'simulation_round_2'
+        ? (simulationProviderOrder || globalProviderOrder || defaultProviderOrder)
       : (globalProviderOrder || defaultProviderOrder);
 
   const openrouterModel = stage === 'combined'
@@ -14012,6 +14034,8 @@ function getForecastLlmCallOptions(stage = 'default') {
         ? (process.env.FORECAST_LLM_IMPACT_MODEL_OPENROUTER || process.env.FORECAST_LLM_MODEL_OPENROUTER)
       : stage === 'market_implications'
         ? (process.env.FORECAST_LLM_MARKET_IMPLICATIONS_MODEL_OPENROUTER || process.env.FORECAST_LLM_MODEL_OPENROUTER)
+      : stage === 'simulation_round_1' || stage === 'simulation_round_2'
+        ? (process.env.FORECAST_LLM_SIMULATION_MODEL_OPENROUTER || process.env.FORECAST_LLM_MODEL_OPENROUTER)
       : process.env.FORECAST_LLM_MODEL_OPENROUTER;
 
   return {
@@ -17036,11 +17060,18 @@ async function processNextSimulationTask(options = {}) {
         });
       }
 
+      const completionStatus = eligibleTheaters.length === 0 ? 'no_eligible_theaters'
+        : theaterResults.length === 0 ? 'all_failed'
+        : failedTheaters.length > 0 ? 'partial'
+        : 'complete';
+
       const outcome = {
         runId,
         schemaVersion: SIMULATION_OUTCOME_SCHEMA_VERSION,
         runnerVersion: SIMULATION_RUNNER_VERSION,
         sourceSimulationPackageKey: pkgPointer.pkgKey,
+        completionStatus,
+        eligibleTheaterCount: eligibleTheaters.length,
         theaterResults,
         failedTheaters,
         globalObservations: eligibleTheaters.length === 0

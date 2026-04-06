@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package worldmonitor.forecast.v1;
+
+import "sebuf/http/annotations.proto";
+
+message TriggerSimulationRequest {
+  // Optional. If empty, derives runId from the latest simulation package pointer in Redis.
+  string run_id = 1 [(sebuf.http.body) = { name: "runId" }];
+}
+
+message TriggerSimulationResponse {
+  // true when the task was accepted into the queue.
+  bool queued = 1;
+  // The runId that was enqueued (or attempted).
+  string run_id = 2;
+  // Populated when queued=false.
+  // Values: "no_package" | "duplicate" | "invalid_run_id" | "rate_limited" | "redis_unavailable"
+  string reason = 3;
+}

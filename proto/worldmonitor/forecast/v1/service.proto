@@ -6,6 +6,7 @@ import "sebuf/http/annotations.proto";
 import "worldmonitor/forecast/v1/get_forecasts.proto";
 import "worldmonitor/forecast/v1/get_simulation_package.proto";
 import "worldmonitor/forecast/v1/get_simulation_outcome.proto";
+import "worldmonitor/forecast/v1/trigger_simulation.proto";
 
 service ForecastService {
   option (sebuf.http.service_config) = {base_path: "/api/forecast/v1"};
@@ -20,5 +21,9 @@ service ForecastService {
 
   rpc GetSimulationOutcome(GetSimulationOutcomeRequest) returns (GetSimulationOutcomeResponse) {
     option (sebuf.http.config) = {path: "/get-simulation-outcome", method: HTTP_METHOD_GET};
+  }
+
+  rpc TriggerSimulation(TriggerSimulationRequest) returns (TriggerSimulationResponse) {
+    option (sebuf.http.config) = {path: "/trigger-simulation", method: HTTP_METHOD_POST};
   }
 }
