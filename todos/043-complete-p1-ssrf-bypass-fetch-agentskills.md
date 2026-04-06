@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "043"
 tags: [code-review, security, ssrf, analytical-frameworks]

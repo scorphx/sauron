@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 priority: p1
 issue_id: "049"
 tags: [code-review, security, health, seeding, pr-2375]
