@@ -1,0 +1,1497 @@
+# sauron.manifest.yaml
+# Master configuration manifest for the World Monitor (Sauron) repository.
+# Covers platform targets, dependency inventory, data source registry,
+# feature roadmap, and OSINT integration plan.
+# Last updated: 2026-04-06
+
+meta:
+  project: sauron
+  codename: "World Monitor"
+  description: >
+    Real-time global intelligence dashboard. Aggregates geopolitical signals,
+    economic data, conflict tracking, threat intel, OSINT feeds, and predictive
+    analytics into a single authenticated SPA with AI-powered situation deduction.
+  branch: claude/build-complete-features-9oBnc
+  stack:
+    frontend: Vite + TypeScript SPA
+    backend: Vercel Edge Functions (31 domain handlers)
+    rpc: Protocol Buffers (sebuf framework)
+    workers: Railway background jobs (cron seed scripts)
+    cache: Upstash Redis (HTTP REST)
+    storage: Cloudflare R2
+    auth: Clerk JWT
+    db: Convex
+    payments: Dodo Payments
+
+# ──────────────────────────────────────────────
+# PLATFORM CONSOLIDATION
+# Goal: one deploy target, zero external-API deps, self-hosted everything
+# ──────────────────────────────────────────────
+platform:
+  current:
+    - vercel          # edge functions + frontend CDN
+    - railway         # background workers + Redis
+    - upstash         # managed Redis (HTTP REST)
+    - cloudflare_r2   # object storage (seed artifacts)
+    - clerk           # auth (JWT + JWKS)
+    - convex          # reactive DB (user records, settings)
+    - dodo_payments   # subscription billing
+    - openrouter      # LLM routing
+    - groq            # fast LLM inference
+
+  target_minimal:
+    host: railway                 # single platform
+    services:
+      app:
+        image: node:22-alpine
+        role: frontend + API server (Express/Hono)
+        replaces: [vercel]
+      worker:
+        image: node:22-alpine
+        role: cron seed jobs (existing scripts)
+        replaces: [railway_workers]
+      redis:
+        image: redis:7-alpine
+        role: cache + task queue
+        replaces: [upstash]
+      postgres:
+        image: postgres:16-alpine
+        role: user records, settings, billing state
+        replaces: [convex, dodo_payments_DB]
+
+  dependency_actions:
+    remove:
+      - upstash:        { replace_with: "railway Redis", effort: medium, notes: "swap ioredis for @upstash/redis client; remove HTTP REST calls" }
+      - convex:         { replace_with: "postgres (Railway)", effort: high, notes: "migrate user/settings schema; remove convex client from frontend" }
+      - dodo_payments:  { replace_with: "Stripe or hardcode isPremium=true initially", effort: low, notes: "isPremium gating can default to true until billing rebuilt" }
+      - openrouter:     { replace_with: "groq only", effort: low, notes: "single provider, remove FORECAST_LLM_*_OPENROUTER env vars" }
+      - cloudflare_r2:  { replace_with: "local Railway volume or postgres JSONB", effort: medium, notes: "seed artifacts are read-heavy; postgres works for <100MB" }
+
+    keep:
+      - clerk:    { reason: "JWT JWKS verification is stateless; no round-trips needed; free tier sufficient" }
+      - groq:     { reason: "fastest free inference tier; fallback to Anthropic/OpenAI via env var" }
+
+    simplify:
+      - vercel → railway: >
+          Compile edge handlers to CJS (already done via docker/build-handlers.mjs),
+          serve with Express. Remove vercel.json routing; add Dockerfile.app.
+      - upstash → ioredis: >
+          Replace `cachedFetchJson` HTTP client with ioredis pipeline.
+          All Redis key names stay the same. Estimated: 2 files changed.
+
+  env_vars_required:
+    auth:       [CLERK_JWT_ISSUER_DOMAIN, CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY]
+    llm:        [GROQ_API_KEY, ANTHROPIC_API_KEY]
+    cache:      [REDIS_URL]
+    storage:    [R2_BUCKET, R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY]  # drop after R2→postgres
+    seed:       [FORECAST_LLM_PROVIDER_ORDER, FORECAST_LLM_MODEL_GROQ]
+
+
+# ──────────────────────────────────────────────
+# EXISTING DATA SOURCES (currently implemented)
+# ──────────────────────────────────────────────
+data_sources:
+  existing:
+    geopolitical:
+      - id: gdelt
+        name: GDELT Project
+        url: https://api.gdeltproject.org/api/v2/doc/doc
+        free: true
+        seed_script: seed-geopolitical-events.mjs
+        ttl: 900
+        notes: "Real-time global event stream; 15-min granularity"
+      - id: acled
+        name: ACLED
+        url: https://acleddata.com/api/acled/read/
+        free: true   # free for non-commercial
+        seed_script: seed-conflict-events.mjs
+        ttl: 3600
+      - id: reliefweb
+        name: ReliefWeb Alerts
+        url: https://api.reliefweb.int/v1/reports
+        free: true
+        ttl: 1800
+    economics:
+      - id: fred
+        name: FRED (St. Louis Fed)
+        url: https://fred.stlouisfed.org/graph/fredgraph.csv
+        free: true
+        seed_script: seed-economic-indicators.mjs
+        ttl: 86400
+      - id: world_bank
+        name: World Bank Open Data
+        url: https://api.worldbank.org/v2/
+        free: true
+        ttl: 86400
+      - id: imf_data
+        name: IMF Data API
+        url: https://www.imf.org/external/datamapper/api/v1/
+        free: true
+        ttl: 86400
+    weather_climate:
+      - id: openweathermap
+        name: OpenWeatherMap
+        url: https://api.openweathermap.org/data/2.5/
+        free: true   # 1000 calls/day free tier
+        seed_script: seed-weather.mjs
+        ttl: 1800
+      - id: nasa_firms
+        name: NASA FIRMS (Fire)
+        url: https://firms.modaps.eosdis.nasa.gov/api/
+        free: true
+        ttl: 3600
+      - id: usgs_earthquakes
+        name: USGS Earthquake Feed
+        url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
+        free: true
+        ttl: 600
+    health:
+      - id: who_disease
+        name: WHO Disease Outbreak News
+        url: https://www.who.int/rss-feeds/news-releases-en.xml
+        free: true
+        seed_script: seed-health-alerts.mjs
+        ttl: 3600
+      - id: cdc_fluview
+        name: CDC FluView
+        url: https://gis.cdc.gov/grasp/fluview/fluportaldashboard.html
+        free: true
+        ttl: 86400
+    prediction_markets:
+      - id: polymarket
+        name: Polymarket
+        url: https://gamma-api.polymarket.com/markets
+        free: true
+        seed_script: seed-prediction-markets.mjs
+        ttl: 900
+      - id: metaculus
+        name: Metaculus API
+        url: https://www.metaculus.com/api2/questions/
+        free: true
+        ttl: 3600
+    threat_intel:
+      - id: abuse_ch
+        name: Abuse.ch (URLhaus + MalwareBazaar + Feodo)
+        urls:
+          - https://urlhaus-api.abuse.ch/v1/urls/recent/
+          - https://bazaar.abuse.ch/export/csv/recent/
+          - https://feodotracker.abuse.ch/downloads/ipblocklist.csv
+        free: true
+        seed_script: seed-threat-intel.mjs
+        ttl: 1800
+      - id: alienvault_otx
+        name: AlienVault OTX
+        url: https://otx.alienvault.com/api/v1/pulses/subscribed
+        free: true
+        ttl: 3600
+      - id: misp_feeds
+        name: MISP Threat Sharing
+        url: https://www.misp-project.org/feeds/
+        free: true
+        ttl: 3600
+
+
+  # ──────────────────────────────────────────────
+  # PROPOSED NEW DATA SOURCES
+  # All free, scrapable/API-able, no paid keys required
+  # ──────────────────────────────────────────────
+  proposed:
+
+    # --- OSINT / IDENTITY / LEAK INTELLIGENCE ---
+    osint_breach:
+      - id: hibp
+        name: Have I Been Pwned (public stats)
+        url: https://haveibeenpwned.com/api/v3/breaches
+        free: true
+        notes: "Public breach list; no key required for list endpoint"
+        feature: breach_tracker
+        seed: seed-breach-tracker.mjs
+        ttl: 86400
+      - id: breachdirectory
+        name: BreachDirectory
+        url: https://breachdirectory.org/
+        free: true
+        notes: "Breach stats aggregation; combine with HIBP for volume metrics"
+        feature: breach_tracker
+      - id: psbdmp
+        name: PSBDMP Pastebin Dumps
+        url: https://psbdmp.ws/api/v3/search/
+        free: true
+        notes: "Search recent pastebin leaks by keyword"
+        feature: leak_monitor
+        ttl: 900
+
+    # --- DOMAIN / IP / NETWORK INTELLIGENCE ---
+    network_intel:
+      - id: shodan_internetdb
+        name: Shodan InternetDB (free, no key)
+        url: https://internetdb.shodan.io/
+        free: true
+        notes: "Open ports + CVEs for any IP, no API key"
+        feature: network_exposure
+        seed: seed-network-exposure.mjs
+        ttl: 3600
+      - id: crt_sh
+        name: Certificate Transparency (crt.sh)
+        url: https://crt.sh/?q=%25&output=json
+        free: true
+        notes: "TLS cert issuance stream; domain enumeration"
+        feature: cert_transparency
+        ttl: 1800
+      - id: urlscan
+        name: URLScan.io
+        url: https://urlscan.io/api/v1/search/
+        free: true   # 5000 searches/day free
+        notes: "URL scanning + screenshot + tech fingerprint"
+        feature: url_intel
+        ttl: 3600
+      - id: greynoise_community
+        name: GreyNoise Community API
+        url: https://api.greynoise.io/v3/community/
+        free: true   # community tier
+        notes: "IP noise classification (scanners vs targeted)"
+        feature: ip_reputation
+        ttl: 3600
+      - id: abuseipdb
+        name: AbuseIPDB
+        url: https://api.abuseipdb.com/api/v2/blacklist
+        free: true   # 1000 req/day free
+        notes: "Bulk IP abuse reports; daily blocklist export"
+        feature: ip_reputation
+        ttl: 3600
+      - id: phishtank
+        name: PhishTank
+        url: https://data.phishtank.com/data/online-valid.csv.bz2
+        free: true
+        notes: "Verified phishing URLs updated hourly"
+        feature: phishing_feed
+        ttl: 3600
+      - id: dnsdumpster
+        name: DNSDumpster
+        url: https://dnsdumpster.com/
+        free: true
+        notes: "Passive DNS + domain mapping; scrape or use HackerTarget API"
+        feature: dns_recon
+
+    # --- FLIGHT / MARITIME / TRANSPORT ---
+    transport:
+      - id: adsbexchange
+        name: ADS-B Exchange (free tier)
+        url: https://globe.adsbexchange.com/globeRates.json
+        free: true
+        notes: "Unfiltered military + civilian aircraft tracking"
+        feature: flight_tracker
+        seed: seed-flight-tracker.mjs
+        ttl: 30
+      - id: opensky
+        name: OpenSky Network
+        url: https://opensky-network.org/api/states/all
+        free: true
+        notes: "60s delayed aircraft states; anonymous access"
+        feature: flight_tracker
+        ttl: 60
+      - id: adsb_fi
+        name: ADSB.fi
+        url: https://api.adsb.fi/v1/mil
+        free: true
+        notes: "Military aircraft live feed"
+        feature: military_air
+        ttl: 30
+      - id: marinetraffic_ais
+        name: Marine Traffic (AIS stream)
+        url: https://www.marinetraffic.com/
+        free: true   # public map scrape or VesselFinder free API
+        notes: "Vessel positions; use VesselFinder free API"
+        feature: maritime_tracker
+        seed: seed-maritime-tracker.mjs
+        ttl: 60
+      - id: vesselfinder
+        name: VesselFinder Free API
+        url: https://api.vesselfinder.com/vessels
+        free: true   # 100 req/day free
+        feature: maritime_tracker
+        ttl: 300
+
+    # --- SATELLITE / GEOSPATIAL ---
+    satellite_geo:
+      - id: nasa_earthdata
+        name: NASA EarthData / GIBS
+        url: https://gibs.earthdata.nasa.gov/wmts/
+        free: true
+        notes: "Daily satellite imagery tiles; wildfire, flood, dust overlays"
+        feature: satellite_imagery
+        seed: seed-satellite-overlay.mjs
+        ttl: 3600
+      - id: sentinel_hub_free
+        name: Copernicus Open Access Hub
+        url: https://scihub.copernicus.eu/dhus/
+        free: true
+        notes: "EU Sentinel-1/2 SAR + optical; free registration"
+        feature: satellite_imagery
+      - id: planet_basemaps
+        name: Planet Education Basemaps
+        url: https://www.planet.com/nicfi/
+        free: true   # NICFI free for qualifying use
+        notes: "Monthly tropical basemaps; deforestation + conflict zone overlay"
+        feature: deforestation_monitor
+      - id: geonames
+        name: GeoNames
+        url: https://www.geonames.org/export/
+        free: true
+        notes: "11M+ placenames; reverse geocoding for event enrichment"
+        feature: geo_enrichment
+        ttl: 604800
+      - id: natural_earth
+        name: Natural Earth Data
+        url: https://www.naturalearthdata.com/
+        free: true
+        notes: "Country/region boundaries; import once to postgres"
+        feature: map_layers
+      - id: opencellid
+        name: OpenCelliD (cell tower DB)
+        url: https://opencellid.org/downloads.php
+        free: true
+        notes: "Cell tower positions; correlate with conflict zone signal intel"
+        feature: signal_intel
+
+    # --- SOCIAL MEDIA SIGNALS ---
+    social_signals:
+      - id: reddit_rss
+        name: Reddit RSS Feeds
+        url: https://www.reddit.com/r/worldnews/new.json
+        free: true
+        notes: "No auth needed; /r/worldnews /r/geopolitics /r/OSINT /r/cybersecurity"
+        feature: social_pulse
+        seed: seed-social-pulse.mjs
+        ttl: 300
+        subreddits:
+          - worldnews
+          - geopolitics
+          - OSINT
+          - cybersecurity
+          - natsec
+          - GlobalPowers
+          - EconomicCollapse
+          - conspiracy   # signal noise but useful for sentiment
+      - id: twitter_nitter
+        name: Nitter RSS (Twitter mirror)
+        url: https://nitter.net/
+        free: true
+        notes: "RSS feeds for key accounts without API key; nitter instances vary"
+        feature: social_pulse
+        ttl: 300
+        accounts:
+          - bellingcat
+          - conflictnews
+          - IntelCrab
+          - OSINTdefender
+          - oryxspioenkop
+          - RALee85
+          - IDF
+          - SecBreach
+      - id: telegram_public
+        name: Telegram Public Channels (t.me/s/)
+        url: https://t.me/s/
+        free: true
+        notes: "Public channels accessible without account via /s/ endpoint"
+        feature: telegram_monitor
+        seed: seed-telegram-monitor.mjs
+        ttl: 300
+        channels:
+          - WarMonitor3
+          - intelslava
+          - flash_news24
+          - osintukraine
+          - voenacher
+      - id: hackernews
+        name: HackerNews API
+        url: https://hacker-news.firebaseio.com/v0/
+        free: true
+        notes: "Top/new stories; good for tech threat signal"
+        feature: tech_pulse
+        ttl: 600
+
+    # --- FINANCIAL / MARKETS ---
+    financial:
+      - id: yfinance_unofficial
+        name: Yahoo Finance (unofficial)
+        url: https://query1.finance.yahoo.com/v8/finance/chart/
+        free: true
+        notes: "No official API key; use ticker symbols for major indices + commodities"
+        feature: market_monitor
+        seed: seed-market-monitor.mjs
+        ttl: 300
+        tickers: [SPY, QQQ, GLD, USO, TLT, VIX, DXY, EURUSD=X, BTC-USD, ETH-USD]
+      - id: alpha_vantage_free
+        name: Alpha Vantage (free tier)
+        url: https://www.alphavantage.co/query
+        free: true   # 25 req/day free
+        notes: "Forex, commodities, economic indicators; free key registration"
+        feature: market_monitor
+        ttl: 3600
+      - id: coingecko
+        name: CoinGecko API (free)
+        url: https://api.coingecko.com/api/v3/
+        free: true   # 10-30 req/min free, no key
+        notes: "Crypto prices, market caps, trending coins"
+        feature: crypto_monitor
+        seed: seed-crypto-monitor.mjs
+        ttl: 300
+      - id: fred_economic
+        name: FRED (already existing - expand)
+        url: https://fred.stlouisfed.org/
+        free: true
+        notes: "Add: VIX, credit spreads, yield curve, M2 money supply"
+        feature: macro_monitor
+        new_series:
+          - VIXCLS    # VIX
+          - T10Y2Y    # 10-2yr yield spread
+          - BAMLH0A0HYM2  # HY credit spread
+          - M2SL      # M2 money supply
+          - CPIAUCSL  # CPI
+      - id: blockchain_info
+        name: Blockchain.info / Blockchair
+        url: https://api.blockchair.com/bitcoin/stats
+        free: true
+        notes: "BTC/ETH on-chain metrics; hash rate, mempool, miner revenue"
+        feature: crypto_onchain
+        ttl: 600
+      - id: opencorporates
+        name: OpenCorporates
+        url: https://api.opencorporates.com/v0.4/companies/search
+        free: true   # public search, limited
+        notes: "Corporate registration data from 140+ jurisdictions"
+        feature: corporate_intel
+        ttl: 86400
+      - id: sec_edgar
+        name: SEC EDGAR Full-Text Search
+        url: https://efts.sec.gov/LATEST/search-index?q=
+        free: true
+        notes: "13F filings, 8-K event disclosures, insider transactions"
+        feature: sec_filings
+        seed: seed-sec-monitor.mjs
+        ttl: 3600
+
+    # --- CONFLICT / MILITARY ---
+    conflict_military:
+      - id: liveuamap
+        name: LiveUAMap (RSS)
+        url: https://liveuamap.com/rss
+        free: true
+        notes: "Real-time conflict event RSS; multiple regional maps"
+        feature: conflict_tracker
+        seed: seed-conflict-live.mjs
+        ttl: 300
+        maps: [ukraine, israel-palestine, syria, africa, global]
+      - id: oryx_losses
+        name: Oryx Equipment Losses
+        url: https://www.oryxspioenkop.com/
+        free: true
+        notes: "Visually confirmed military equipment losses; scrape HTML"
+        feature: military_losses
+        ttl: 3600
+      - id: acled_expanded
+        name: ACLED (expand coverage)
+        url: https://acleddata.com/api/acled/read/
+        free: true
+        notes: "Add: actor network analysis, fatality time-series by country"
+        feature: conflict_analytics
+      - id: global_terrorism_db
+        name: Global Terrorism Database (GTD)
+        url: https://www.start.umd.edu/gtd/
+        free: true   # free download, annual data
+        notes: "200K+ terrorist incidents; import as static dataset"
+        feature: terrorism_analytics
+        refresh: annual
+      - id: sipri_arms
+        name: SIPRI Arms Transfer Database
+        url: https://www.sipri.org/databases/armstransfers
+        free: true
+        notes: "Global arms trade flows; static annual import"
+        feature: arms_trade
+        refresh: annual
+      - id: iiss_military_balance
+        name: IISS Military Balance (open summaries)
+        url: https://www.iiss.org/
+        free: true   # summary data only; full DB paywalled
+        notes: "Order-of-battle summaries; supplement with Wikipedia military articles"
+        feature: military_capabilities
+      - id: informnapalm
+        name: InformNapalm Database
+        url: https://informnapalm.org/db/russian-aggression/
+        free: true
+        notes: "Russian military unit/equipment database"
+        feature: military_tracking
+
+    # --- ENVIRONMENTAL / DISASTER ---
+    environmental:
+      - id: reliefweb_disasters
+        name: ReliefWeb Disasters API
+        url: https://api.reliefweb.int/v1/disasters
+        free: true
+        notes: "UN humanitarian emergency database"
+        feature: disaster_monitor
+        ttl: 1800
+      - id: gdacs
+        name: GDACS (Global Disaster Alert)
+        url: https://www.gdacs.org/gdacsapi/api/events/geteventlist/EVENTS
+        free: true
+        notes: "UN-backed disaster classification + impact scores"
+        feature: disaster_monitor
+        seed: seed-disaster-monitor.mjs
+        ttl: 900
+      - id: noaa_storms
+        name: NOAA Storm Events
+        url: https://www.ncei.noaa.gov/access/monitoring/
+        free: true
+        notes: "Historical + near-real-time storm data"
+        feature: weather_extremes
+        ttl: 3600
+      - id: copernicus_ems
+        name: Copernicus Emergency Management
+        url: https://emergency.copernicus.eu/mapping/list-of-activations-rapid
+        free: true
+        notes: "EU satellite damage assessments for disasters"
+        feature: disaster_imagery
+        ttl: 3600
+      - id: global_forest_watch
+        name: Global Forest Watch API
+        url: https://data-api.globalforestwatch.org/
+        free: true
+        notes: "Near-real-time deforestation alerts (GLAD/RADD)"
+        feature: deforestation_alerts
+        ttl: 3600
+
+    # --- SCIENCE / HEALTH ---
+    science_health:
+      - id: nextstrain
+        name: Nextstrain (pathogen evolution)
+        url: https://nextstrain.org/
+        free: true
+        notes: "Real-time phylogenetic trees for flu, COVID, mpox, etc."
+        feature: pathogen_tracker
+        seed: seed-pathogen-tracker.mjs
+        ttl: 3600
+      - id: who_disease_news
+        name: WHO Disease Outbreak News
+        url: https://www.who.int/emergencies/disease-outbreak-news/
+        free: true
+        notes: "Official WHO outbreak reports"
+        feature: disease_monitor
+        ttl: 3600
+      - id: promed_mail
+        name: ProMED-mail
+        url: https://promedmail.org/promed-posts/
+        free: true
+        notes: "Early warning disease event reporting; RSS available"
+        feature: disease_monitor
+        ttl: 1800
+      - id: arxiv_cs_sec
+        name: arXiv CS.CR (cybersecurity papers)
+        url: https://export.arxiv.org/api/query?search_query=cat:cs.CR
+        free: true
+        notes: "Latest security research; parse for emerging threat topics"
+        feature: research_pulse
+        ttl: 3600
+      - id: cve_nvd
+        name: NIST NVD CVE Feed
+        url: https://services.nvd.nist.gov/rest/json/cves/2.0
+        free: true
+        notes: "All CVEs with CVSS scores; filter CVSS>=7 for critical"
+        feature: vuln_monitor
+        seed: seed-cve-monitor.mjs
+        ttl: 1800
+
+    # --- NUCLEAR / WMD ---
+    nuclear_wmd:
+      - id: rsoe_edis
+        name: RSOE EDIS (Emergency & Disaster)
+        url: https://rsoe-edis.org/eventList
+        free: true
+        notes: "Hazmat, nuclear, CBRN incident tracking"
+        feature: hazmat_monitor
+        ttl: 900
+      - id: iaea_news
+        name: IAEA News (RSS)
+        url: https://www.iaea.org/feeds/topnews.xml
+        free: true
+        notes: "Nuclear facility status updates"
+        feature: nuclear_monitor
+        ttl: 3600
+      - id: fas_nuclear
+        name: Federation of American Scientists Nuclear
+        url: https://fas.org/issues/nuclear-weapons/
+        free: true
+        notes: "Nuclear arsenal estimates + arms control status"
+        feature: nuclear_monitor
+        refresh: monthly
+
+    # --- SPACE / CYBER PHYSICAL ---
+    space_cyber:
+      - id: n2yo_tle
+        name: N2YO TLE Satellite Tracking
+        url: https://www.n2yo.com/api/
+        free: true   # 1000 req/hr free
+        notes: "ISS, Starlink, spy sats, debris tracking"
+        feature: satellite_tracker
+        seed: seed-satellite-tracker.mjs
+        ttl: 60
+      - id: space_weather
+        name: NOAA Space Weather
+        url: https://services.swpc.noaa.gov/
+        free: true
+        notes: "Solar flares, geomagnetic storms, aurora forecasts"
+        feature: space_weather
+        seed: seed-space-weather.mjs
+        ttl: 900
+      - id: celestrak
+        name: CelesTrak (satellite catalog)
+        url: https://celestrak.org/SOCRATES/
+        free: true
+        notes: "Conjunction analysis + military satellite catalog"
+        feature: satellite_tracker
+        ttl: 3600
+      - id: shodan_cve_stream
+        name: Shodan CVE Monitor
+        url: https://internetdb.shodan.io/
+        free: true
+        notes: "Correlate fresh CVEs with exposed internet assets"
+        feature: cyber_exposure
+        ttl: 3600
+
+    # --- MEDIA / DISINFORMATION ---
+    media_disinfo:
+      - id: newsapi_org
+        name: NewsAPI (free tier)
+        url: https://newsapi.org/v2/top-headlines
+        free: true   # 100 req/day dev tier
+        notes: "Top headlines from 80,000+ sources; no-key endpoints for some"
+        feature: news_aggregator
+        seed: seed-news-aggregator.mjs
+        ttl: 600
+      - id: mediacloud
+        name: Media Cloud (Wayback + news)
+        url: https://mediacloud.org/
+        free: true
+        notes: "Academic media monitoring; free tier API"
+        feature: media_monitor
+        ttl: 3600
+      - id: gdelt_gkg
+        name: GDELT Global Knowledge Graph
+        url: https://api.gdeltproject.org/api/v2/gkg/gkg
+        free: true
+        notes: "Themes, tones, persons, orgs extracted from news globally"
+        feature: narrative_analysis
+        ttl: 900
+      - id: snopes_feed
+        name: Snopes Fact Checks (RSS)
+        url: https://www.snopes.com/feed/
+        free: true
+        notes: "Fact check feed for debunking integration"
+        feature: disinfo_tracker
+        ttl: 3600
+      - id: euvsdisinfo
+        name: EUvsDisinfo Database
+        url: https://euvsdisinfo.eu/
+        free: true
+        notes: "EU East StratCom disinformation case database"
+        feature: disinfo_tracker
+        ttl: 86400
+
+    # --- SANCTIONS / LEGAL / GOVERNMENT ---
+    sanctions_legal:
+      - id: ofac_sanctions
+        name: OFAC Sanctions List (SDN)
+        url: https://ofac.treas.gov/downloads/sdn.csv
+        free: true
+        notes: "US Treasury SDN list; entities, individuals, vessels"
+        feature: sanctions_monitor
+        seed: seed-sanctions-monitor.mjs
+        ttl: 86400
+      - id: un_sanctions
+        name: UN Security Council Sanctions
+        url: https://scsanctions.un.org/consolidated/
+        free: true
+        notes: "UN consolidated sanctions list XML"
+        feature: sanctions_monitor
+        ttl: 86400
+      - id: eu_sanctions
+        name: EU Consolidated Sanctions (CFSP)
+        url: https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content
+        free: true
+        notes: "EU sanctions XML feed"
+        feature: sanctions_monitor
+        ttl: 86400
+      - id: opensanctions
+        name: OpenSanctions.org
+        url: https://data.opensanctions.org/datasets/latest/sanctions/
+        free: true
+        notes: "Merged multi-source sanctions dataset"
+        feature: sanctions_monitor
+        ttl: 86400
+      - id: muckrock_foia
+        name: MuckRock FOIA Database
+        url: https://www.muckrock.com/api_v1/foia/
+        free: true
+        notes: "Filed/completed FOIA requests; track government transparency"
+        feature: foia_tracker
+        ttl: 3600
+      - id: pacer_free
+        name: CourtListener / PACER Free
+        url: https://www.courtlistener.com/api/rest/v3/
+        free: true
+        notes: "Federal case search; 740M+ court records via JudyRecords"
+        feature: court_monitor
+        ttl: 3600
+      - id: usaspending
+        name: USASpending.gov API
+        url: https://api.usaspending.gov/api/v2/
+        free: true
+        notes: "Federal contracts + grants; track defense/intel spending"
+        feature: gov_spending
+        seed: seed-gov-spending.mjs
+        ttl: 86400
+      - id: fpds_contracts
+        name: SAM.gov / FPDS Contract Awards
+        url: https://api.sam.gov/opportunities/v1/search
+        free: true   # API key required but free
+        notes: "Federal procurement awards; flag classified + defense contracts"
+        feature: gov_spending
+        ttl: 3600
+
+    # --- USERNAME / IDENTITY / PERSONA ---
+    identity_osint:
+      - id: whatsmyname_api
+        name: WhatsMyName Web
+        url: https://whatsmyname.app/
+        free: true
+        notes: "Username enumeration across 600+ sites; open source list"
+        feature: username_search
+      - id: sherlock_api
+        name: Sherlock (self-hosted)
+        url: https://github.com/sherlock-project/sherlock
+        free: true
+        notes: "Run as microservice on Railway; username → social profiles"
+        feature: username_search
+        deploy: railway_worker
+      - id: holehe
+        name: Holehe (email→account)
+        url: https://github.com/megadose/holehe
+        free: true
+        notes: "Check if email registered on 120+ services via forgot-password"
+        feature: email_osint
+        deploy: railway_worker
+      - id: maigret
+        name: Maigret
+        url: https://github.com/soxoj/maigret
+        free: true
+        notes: "Collect full dossier by username; 3000+ sites"
+        feature: username_search
+        deploy: railway_worker
+
+    # --- DARKNET / RANSOMWARE MONITORING ---
+    darknet:
+      - id: ransomwatch
+        name: RansomWatch
+        url: https://ransomwatch.telemetry.ltd/
+        free: true
+        notes: "Transparent ransomware victim tracking; JSON API available"
+        feature: ransomware_tracker
+        seed: seed-ransomware-tracker.mjs
+        ttl: 1800
+      - id: ddosecrets
+        name: DDoSecrets Public Data
+        url: https://ddosecrets.com/
+        free: true
+        notes: "Publicly released leaked datasets index"
+        feature: leak_monitor
+        ttl: 86400
+      - id: ahmia
+        name: Ahmia Tor Search Index
+        url: https://ahmia.fi/search/?q=
+        free: true
+        notes: "Clearnet search of Tor hidden services"
+        feature: darknet_monitor
+        ttl: 3600
+
+    # --- BLOCKCHAIN / CRYPTO INVESTIGATION ---
+    blockchain:
+      - id: blockchair
+        name: Blockchair Multi-Chain API
+        url: https://api.blockchair.com/
+        free: true   # 30 req/min free
+        notes: "BTC/ETH/SOL/etc; transactions, address clustering"
+        feature: crypto_intel
+        seed: seed-crypto-intel.mjs
+        ttl: 300
+      - id: etherscan_api
+        name: Etherscan API (free)
+        url: https://api.etherscan.io/api
+        free: true   # free key, 5 req/s
+        notes: "ETH address labels, token transfers, contract activity"
+        feature: crypto_intel
+        ttl: 300
+      - id: chainabuse
+        name: ChainAbuse
+        url: https://www.chainabuse.com/api/reports
+        free: true
+        notes: "Community-reported scam/hack addresses"
+        feature: crypto_scam_db
+        ttl: 3600
+
+    # --- INFRASTRUCTURE / IOT ---
+    infrastructure_iot:
+      - id: censys_certs
+        name: Censys Certificate Search
+        url: https://search.censys.io/api
+        free: true   # 250 queries/month free
+        notes: "Internet-wide cert + port scan data"
+        feature: exposure_monitor
+        ttl: 3600
+      - id: wigle_wifi
+        name: WiGLE WiFi Database
+        url: https://api.wigle.net/api/v2/
+        free: true   # free with account
+        notes: "Geolocated WiFi network database; 1B+ records"
+        feature: wifi_mapping
+        ttl: 86400
+      - id: earthcam_feeds
+        name: EarthCam Public Feeds
+        url: https://www.earthcam.com/
+        free: true
+        notes: "Public webcam index; integrate as live-camera layer"
+        feature: live_cameras
+        ttl: 300
+
+
+# ──────────────────────────────────────────────
+# FEATURE ROADMAP
+# Priority: P0=blocker, P1=launch-critical, P2=high-value, P3=nice-to-have
+# ──────────────────────────────────────────────
+features:
+
+  # Already built / in-progress
+  existing:
+    - id: geopolitical_events
+      status: live
+      description: "GDELT + ACLED event stream with geo tagging"
+    - id: economic_indicators
+      status: live
+      description: "FRED + World Bank macro data"
+    - id: weather_alerts
+      status: live
+      description: "OpenWeatherMap + NASA FIRMS fire detection"
+    - id: health_alerts
+      status: live
+      description: "WHO disease outbreak news"
+    - id: situation_deduction
+      status: live
+      description: "AI-powered situation analysis with LLM reasoning"
+    - id: deep_forecast
+      status: live
+      description: "Multi-stage forecast pipeline with simulation"
+    - id: prediction_markets
+      status: live
+      description: "Polymarket + Metaculus odds integration"
+    - id: threat_intel_feed
+      status: live
+      description: "Abuse.ch + AlienVault OTX indicators"
+    - id: auth_premium_gating
+      status: live
+      description: "Clerk JWT auth with pro/free tier gating"
+    - id: simulation_trigger
+      status: live
+      description: "HTTP endpoint to queue forecast simulations"
+
+  # Near-term roadmap
+  p1_launch:
+    - id: flight_tracker
+      priority: P1
+      data_sources: [adsbexchange, opensky, adsb_fi]
+      description: "Live aircraft map with military + civilian tracking"
+      seed: seed-flight-tracker.mjs
+      frontend: FlightTrackerPanel
+      notes: "ADS-B Exchange unfiltered feed; no API key needed"
+
+    - id: maritime_tracker
+      priority: P1
+      data_sources: [vesselfinder, marinetraffic_ais]
+      description: "Live vessel positions; flag suspicious movements"
+      seed: seed-maritime-tracker.mjs
+      frontend: MaritimePanel
+
+    - id: conflict_live_map
+      priority: P1
+      data_sources: [liveuamap, acled_expanded, oryx_losses]
+      description: "Real-time conflict events on interactive map"
+      seed: seed-conflict-live.mjs
+      frontend: ConflictMapPanel
+
+    - id: ransomware_tracker
+      priority: P1
+      data_sources: [ransomwatch]
+      description: "Live ransomware victim claims feed with sector tagging"
+      seed: seed-ransomware-tracker.mjs
+      frontend: RansomwarePanel
+
+    - id: sanctions_monitor
+      priority: P1
+      data_sources: [ofac_sanctions, un_sanctions, eu_sanctions, opensanctions]
+      description: "Unified sanctions list with entity search"
+      seed: seed-sanctions-monitor.mjs
+      frontend: SanctionsPanel
+
+    - id: cve_monitor
+      priority: P1
+      data_sources: [cve_nvd, shodan_internetdb]
+      description: "Critical CVE feed with internet exposure correlation"
+      seed: seed-cve-monitor.mjs
+      frontend: CvePanel
+
+  p2_high_value:
+    - id: satellite_imagery
+      priority: P2
+      data_sources: [nasa_earthdata, sentinel_hub_free]
+      description: "Satellite layer overlays (fire, flood, conflict zones)"
+      seed: seed-satellite-overlay.mjs
+      frontend: SatellitePanel
+
+    - id: social_pulse
+      priority: P2
+      data_sources: [reddit_rss, twitter_nitter, hackernews]
+      description: "Real-time social signal aggregation with trend detection"
+      seed: seed-social-pulse.mjs
+      frontend: SocialPulsePanel
+
+    - id: market_monitor
+      priority: P2
+      data_sources: [yfinance_unofficial, coingecko, alpha_vantage_free]
+      description: "Markets dashboard: indices, forex, commodities, crypto"
+      seed: seed-market-monitor.mjs
+      frontend: MarketPanel
+
+    - id: telegram_monitor
+      priority: P2
+      data_sources: [telegram_public]
+      description: "Public Telegram channel monitoring for conflict/intel channels"
+      seed: seed-telegram-monitor.mjs
+      frontend: TelegramPanel
+
+    - id: disaster_monitor
+      priority: P2
+      data_sources: [gdacs, reliefweb_disasters, noaa_storms, copernicus_ems]
+      description: "Natural disaster + humanitarian emergency tracking"
+      seed: seed-disaster-monitor.mjs
+      frontend: DisasterPanel
+
+    - id: breach_tracker
+      priority: P2
+      data_sources: [hibp, breachdirectory, psbdmp]
+      description: "Data breach announcements + volume metrics"
+      seed: seed-breach-tracker.mjs
+      frontend: BreachPanel
+
+    - id: space_weather
+      priority: P2
+      data_sources: [space_weather, n2yo_tle, celestrak]
+      description: "Solar activity + satellite tracking"
+      seed: seed-space-weather.mjs
+      frontend: SpacePanel
+
+    - id: pathogen_tracker
+      priority: P2
+      data_sources: [nextstrain, who_disease_news, promed_mail]
+      description: "Disease outbreak + pathogen evolution tracking"
+      seed: seed-pathogen-tracker.mjs
+      frontend: PathogenPanel
+
+    - id: crypto_intel
+      priority: P2
+      data_sources: [blockchair, etherscan_api, chainabuse]
+      description: "On-chain intelligence: large transfers, mixer activity, scam clusters"
+      seed: seed-crypto-intel.mjs
+      frontend: CryptoIntelPanel
+
+    - id: gov_spending
+      priority: P2
+      data_sources: [usaspending, fpds_contracts, sec_edgar]
+      description: "Federal contracts + defense spending tracker"
+      seed: seed-gov-spending.mjs
+      frontend: GovSpendingPanel
+
+    - id: sec_filings
+      priority: P2
+      data_sources: [sec_edgar]
+      description: "SEC 8-K event disclosures + 13F institutional holdings"
+      seed: seed-sec-monitor.mjs
+      frontend: SecFilingsPanel
+
+    - id: news_aggregator
+      priority: P2
+      data_sources: [newsapi_org, gdelt_gkg, mediacloud]
+      description: "Global news with sentiment analysis and narrative tracking"
+      seed: seed-news-aggregator.mjs
+      frontend: NewsPanel
+
+    - id: username_search
+      priority: P2
+      data_sources: [whatsmyname_api, sherlock_api, maigret]
+      description: "Username enumeration across 600+ platforms"
+      deploy: [railway_worker]
+      frontend: UsernameSearchPanel
+
+    - id: network_exposure
+      priority: P2
+      data_sources: [shodan_internetdb, greynoise_community, abuseipdb, phishtank]
+      description: "IP/domain threat intelligence and exposure analysis"
+      seed: seed-network-exposure.mjs
+      frontend: NetworkExposurePanel
+
+  p3_nice_to_have:
+    - id: nuclear_monitor
+      priority: P3
+      data_sources: [iaea_news, fas_nuclear, rsoe_edis]
+      description: "Nuclear facility status + arms control tracker"
+      frontend: NuclearPanel
+
+    - id: arms_trade
+      priority: P3
+      data_sources: [sipri_arms]
+      description: "Global arms transfer flows"
+      frontend: ArmsTradePanel
+
+    - id: darknet_monitor
+      priority: P3
+      data_sources: [ransomwatch, ddosecrets, ahmia]
+      description: "Darknet activity monitoring: forums, markets, leaks"
+      frontend: DarknetPanel
+
+    - id: deforestation_alerts
+      priority: P3
+      data_sources: [global_forest_watch, planet_basemaps]
+      description: "Near-real-time deforestation alerts"
+      frontend: DeforestationPanel
+
+    - id: police_accountability
+      priority: P3
+      data_sources:
+        - name: "OpenOversight"
+          url: https://openoversight.com/
+          free: true
+        - name: "Mapping Police Violence"
+          url: https://mappingpoliceviolence.org/
+          free: true
+      description: "Law enforcement misconduct + use-of-force database"
+      frontend: PoliceAccountabilityPanel
+
+    - id: foia_tracker
+      priority: P3
+      data_sources: [muckrock_foia]
+      description: "FOIA request tracking + document analysis"
+      frontend: FoiaPanel
+
+    - id: court_monitor
+      priority: P3
+      data_sources: [pacer_free]
+      description: "Federal case monitoring for key entities/persons"
+      frontend: CourtPanel
+
+    - id: corporate_intel
+      priority: P3
+      data_sources: [opencorporates, icij_offshore_leaks]
+      description: "Corporate registry cross-reference + offshore leaks"
+      frontend: CorporateIntelPanel
+      additional:
+        - name: "ICIJ Offshore Leaks"
+          url: https://offshoreleaks.icij.org/
+          free: true
+          notes: "Panama Papers, Pandora Papers, Paradise Papers"
+
+    - id: wifi_mapping
+      priority: P3
+      data_sources: [wigle_wifi, opencellid]
+      description: "WiFi network + cell tower geolocation mapping"
+      frontend: WifiMapPanel
+
+    - id: live_cameras
+      priority: P3
+      data_sources: [earthcam_feeds]
+      description: "Public webcam integration for situational awareness"
+      frontend: LiveCameraPanel
+
+    - id: radio_scanner
+      priority: P3
+      data_sources:
+        - name: Broadcastify
+          url: https://www.broadcastify.com/listen/
+          free: true
+        - name: Radio Garden
+          url: http://radio.garden/
+          free: true
+      description: "Live police/fire/aviation radio scanner integration"
+      frontend: RadioPanel
+
+    - id: satellite_tracker
+      priority: P3
+      data_sources: [n2yo_tle, celestrak]
+      description: "Live satellite tracking with military + spy sat catalog"
+      frontend: SatelliteTrackerPanel
+
+    - id: disinfo_tracker
+      priority: P3
+      data_sources: [snopes_feed, euvsdisinfo, gdelt_gkg]
+      description: "Disinformation campaign detection and fact-check integration"
+      frontend: DisinfoPanem
+
+    - id: extremism_monitor
+      priority: P3
+      data_sources:
+        - name: SPLC Extremist Files
+          url: https://www.splcenter.org/fighting-hate/extremist-files/individual
+          free: true
+        - name: Global Terrorism Database
+          url: https://www.start.umd.edu/gtd/
+          free: true
+        - name: Sanctions List OFAC
+          url: https://sanctionssearch.ofac.treas.gov/
+          free: true
+      description: "Extremist organization + terrorism incident tracking"
+      frontend: ExtremismPanel
+
+    - id: immigration_asylum
+      priority: P3
+      data_sources:
+        - name: UNHCR Data Portal
+          url: https://data.unhcr.org/en/situations
+          free: true
+        - name: IOM Displacement Tracking
+          url: https://dtm.iom.int/api
+          free: true
+      description: "Refugee flows, displacement, asylum application data"
+      frontend: DisplacementPanel
+
+    - id: food_security
+      priority: P3
+      data_sources:
+        - name: FAO Food Price Index
+          url: https://www.fao.org/worldfoodsituation/foodpricesindex/en/
+          free: true
+        - name: IPC Food Insecurity
+          url: https://www.ipcinfo.org/ipc-country-analysis/
+          free: true
+        - name: FEWS NET
+          url: https://fews.net/api
+          free: true
+      description: "Global food security + famine risk tracking"
+      frontend: FoodSecurityPanel
+
+    - id: energy_monitor
+      priority: P3
+      data_sources:
+        - name: EIA Energy API
+          url: https://api.eia.gov/v2/
+          free: true   # free key
+        - name: ENTSO-E Transparency
+          url: https://transparency.entsoe.eu/api
+          free: true   # free registration
+        - name: Global Energy Monitor
+          url: https://globalenergymonitor.org/
+          free: true
+      description: "Energy prices, grid status, pipeline flows"
+      frontend: EnergyPanel
+
+    - id: election_monitor
+      priority: P3
+      data_sources:
+        - name: ElectionGuide
+          url: https://www.electionguide.org/
+          free: true
+        - name: V-Dem Dataset
+          url: https://www.v-dem.net/data/
+          free: true
+        - name: FEC Campaign Finance
+          url: https://api.open.fec.gov/v1/
+          free: true   # free API key
+      description: "Election calendar, campaign finance, democracy index"
+      frontend: ElectionPanel
+
+# ──────────────────────────────────────────────
+# OSINT TOOL INTEGRATION INDEX
+# Maps Awesome-OSINT-For-Everything categories to
+# sauron features and proposed seed jobs
+# ──────────────────────────────────────────────
+osint_integrations:
+
+  breaches_leaks:
+    primary: [hibp, breachdirectory, leakcheck, psbdmp]
+    sauron_feature: breach_tracker
+    implementation: "Seed daily breach stats; alert on new databases"
+    free_tools: ["HaveIBeenPwned /breaches endpoint", "BreachDirectory public search", "PSBDMP API", "Leak-Lookup free tier"]
+
+  network_recon:
+    primary: [shodan_internetdb, censys_certs, greynoise_community, urlscan]
+    sauron_feature: network_exposure
+    implementation: "Correlate CVEs with exposed assets; IP reputation scoring"
+    free_tools: ["Shodan InternetDB (no key)", "Censys free tier", "GreyNoise community", "URLScan 5k/day"]
+
+  username_enumeration:
+    primary: [whatsmyname, sherlock, maigret]
+    sauron_feature: username_search
+    implementation: "Deploy sherlock/maigret as Railway worker; accept username queries via RPC"
+    free_tools: ["WhatsMyName (open source list)", "Sherlock (self-hosted)", "Maigret (3000+ sites)"]
+
+  email_osint:
+    primary: [holehe, h8mail, epieos]
+    sauron_feature: email_osint
+    implementation: "Check email registration across services; breach lookup"
+    free_tools: ["Holehe (forgot-password technique)", "Hunter.io free tier (50/mo)", "Epieos OSINT"]
+
+  flight_tracking:
+    primary: [adsbexchange, opensky, adsb_fi]
+    sauron_feature: flight_tracker
+    implementation: "30s refresh; military callsign detection; geofence alerts"
+    free_tools: ["ADS-B Exchange (unfiltered, free)", "OpenSky REST API (anonymous)", "ADSB.fi military feed"]
+
+  maritime:
+    primary: [vesselfinder, marinetraffic]
+    sauron_feature: maritime_tracker
+    implementation: "5min refresh; flag tankers near sanctioned ports"
+    free_tools: ["VesselFinder 100 req/day free", "Marine Traffic public map"]
+
+  threat_intel:
+    primary: [abuse_ch, alienvault_otx, misp_feeds, phishtank]
+    sauron_feature: threat_intel_feed
+    implementation: "Existing + expand with Feodo C2, URLhaus, MalwareBazaar"
+    free_tools: ["Abuse.ch (all free)", "OTX 20M indicators/day", "PhishTank CSV"]
+
+  conflict_tracking:
+    primary: [liveuamap, acled, oryx_losses, informnapalm, bellingcat]
+    sauron_feature: conflict_live_map
+    implementation: "RSS + API aggregation; geocode events to conflict map layer"
+    free_tools: ["LiveUAMap RSS", "ACLED free non-commercial", "Oryx (scrape)", "InformNapalm DB"]
+
+  darknet_monitoring:
+    primary: [ransomwatch, ahmia, ddosecrets]
+    sauron_feature: darknet_monitor
+    implementation: "Ransomwatch JSON API; Ahmia Tor search index"
+    free_tools: ["RansomWatch (JSON, open)", "Ahmia clearnet Tor search", "DDoSecrets public index"]
+
+  blockchain_crypto:
+    primary: [blockchair, etherscan_api, chainabuse]
+    sauron_feature: crypto_intel
+    implementation: "Track large transfers, mixer interactions, sanctioned wallet clusters"
+    free_tools: ["Blockchair 30 req/min free", "Etherscan free API (5 req/s)", "ChainAbuse reports API"]
+
+  social_media_signals:
+    primary: [reddit_rss, twitter_nitter, telegram_public]
+    sauron_feature: social_pulse
+    implementation: "Keyword + account monitoring; sentiment scoring via LLM"
+    free_tools: ["Reddit JSON API (no key)", "Nitter RSS (self-hostable)", "Telegram /s/ endpoint"]
+
+  geospatial_imagery:
+    primary: [nasa_earthdata, nasa_firms, sentinel_hub_free, planet_basemaps]
+    sauron_feature: satellite_imagery
+    implementation: "Overlay tiles on conflict/disaster maps; change detection"
+    free_tools: ["NASA GIBS WMTS (free)", "FIRMS fire API (free)", "Copernicus Open Access (free)", "NICFI Planet (free)"]
+
+  financial_markets:
+    primary: [yfinance_unofficial, coingecko, fred_economic, sec_edgar]
+    sauron_feature: market_monitor + sec_filings
+    implementation: "5min market refresh; daily SEC 8-K scrape"
+    free_tools: ["Yahoo Finance unofficial JSON", "CoinGecko (no key)", "FRED (free key)", "SEC EDGAR EFTS (free)"]
+
+  sanctions_legal:
+    primary: [ofac_sanctions, opensanctions, un_sanctions, eu_sanctions]
+    sauron_feature: sanctions_monitor
+    implementation: "Daily merge of all lists; entity search + alert on new additions"
+    free_tools: ["OFAC CSV download (free)", "OpenSanctions merged dataset (free)", "UN XML feed", "EU XML feed"]
+
+  government_transparency:
+    primary: [usaspending, fpds_contracts, muckrock_foia, pacer_free]
+    sauron_feature: gov_spending + foia_tracker + court_monitor
+    implementation: "Track defense/intel contracts; FOIA completion rates"
+    free_tools: ["USASpending.gov API (free)", "SAM.gov free API key", "MuckRock API (free)", "CourtListener API (free)"]
+
+  disaster_humanitarian:
+    primary: [gdacs, reliefweb_disasters, noaa_storms, copernicus_ems]
+    sauron_feature: disaster_monitor
+    implementation: "GDACS alert classification + ReliefWeb humanitarian status"
+    free_tools: ["GDACS JSON events (free)", "ReliefWeb API (free)", "NOAA storm data (free)", "Copernicus EMS (free)"]
+
+  disease_pathogen:
+    primary: [nextstrain, who_disease_news, promed_mail, cdc_fluview]
+    sauron_feature: pathogen_tracker
+    implementation: "WHO RSS + ProMED alert parsing; Nextstrain phylogeny API"
+    free_tools: ["Nextstrain JSON (free)", "WHO RSS (free)", "ProMED RSS (free)", "CDC FluView (free)"]
+
+  space_weather_sats:
+    primary: [space_weather, n2yo_tle, celestrak]
+    sauron_feature: space_weather + satellite_tracker
+    implementation: "NOAA SWPC JSON alerts; TLE parsing for military sats"
+    free_tools: ["NOAA SWPC (free)", "N2YO 1000 req/hr free", "CelesTrak (free)"]
+
+
+# ──────────────────────────────────────────────
+# SEED JOB SCHEDULE
+# All jobs run on Railway cron; write to Redis + postgres
+# ──────────────────────────────────────────────
+seed_schedule:
+  every_30s:
+    - seed-flight-tracker.mjs       # ADS-B Exchange aircraft states
+    - seed-maritime-tracker.mjs     # VesselFinder AIS positions (rate-limited to 5min effective)
+
+  every_5min:
+    - seed-social-pulse.mjs         # Reddit JSON, Nitter RSS, Telegram /s/
+    - seed-market-monitor.mjs       # Yahoo Finance tickers
+    - seed-crypto-monitor.mjs       # CoinGecko prices + volumes
+    - seed-conflict-live.mjs        # LiveUAMap RSS
+
+  every_15min:
+    - seed-geopolitical-events.mjs  # GDELT v2 doc API (15min granularity)
+    - seed-prediction-markets.mjs   # Polymarket + Metaculus
+
+  every_30min:
+    - seed-threat-intel.mjs         # URLhaus, MalwareBazaar, Feodo, OTX
+    - seed-network-exposure.mjs     # GreyNoise community, AbuseIPDB blocklist
+    - seed-cve-monitor.mjs          # NVD CVE feed (new CVSS>=7)
+    - seed-ransomware-tracker.mjs   # RansomWatch JSON
+    - seed-disaster-monitor.mjs     # GDACS + ReliefWeb disasters
+    - seed-telegram-monitor.mjs     # Public Telegram channels
+
+  every_hour:
+    - seed-weather.mjs              # OpenWeatherMap
+    - seed-conflict-events.mjs      # ACLED API
+    - seed-breach-tracker.mjs       # HIBP breach list delta
+    - seed-pathogen-tracker.mjs     # WHO RSS + ProMED
+    - seed-space-weather.mjs        # NOAA SWPC solar events
+    - seed-satellite-tracker.mjs    # N2YO TLE updates
+    - seed-news-aggregator.mjs      # NewsAPI + GDELT GKG
+
+  every_6h:
+    - seed-health-alerts.mjs        # WHO disease outbreak news
+    - seed-crypto-intel.mjs         # Blockchair on-chain metrics
+
+  daily:
+    - seed-economic-indicators.mjs  # FRED, World Bank, IMF
+    - seed-sanctions-monitor.mjs    # OFAC + UN + EU + OpenSanctions
+    - seed-sec-monitor.mjs          # SEC EDGAR 8-K filings
+    - seed-gov-spending.mjs         # USASpending.gov contracts
+    - seed-satellite-overlay.mjs    # NASA GIBS daily imagery
+    - seed-forecasts.mjs            # Full forecast pipeline
+
+  weekly:
+    - seed-geo-enrichment.mjs       # GeoNames + Natural Earth refresh
+
+  monthly:
+    - seed-arms-trade.mjs           # SIPRI arms transfer data
+    - seed-nuclear-monitor.mjs      # IAEA + FAS nuclear data
+
+  annual:
+    - seed-terrorism-db.mjs         # GTD import
+    - seed-military-balance.mjs     # IISS + SIPRI military balance
+
+# ──────────────────────────────────────────────
+# MIGRATION STEPS (dependency reduction)
+# Execute in this order to reach minimal platform
+# ──────────────────────────────────────────────
+migration:
+  step_1_redis:
+    description: "Replace Upstash with Railway Redis"
+    effort: 2_days
+    files:
+      - server/_shared/redis.ts         # swap HTTP client for ioredis
+      - scripts/seed-*.mjs              # update REDIS_URL var
+      - server/_shared/premium-check.ts # no change needed
+    env_changes:
+      remove: [UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN]
+      add:    [REDIS_URL]  # redis://default:pass@railway-host:6379
+
+  step_2_storage:
+    description: "Replace Cloudflare R2 with Railway postgres JSONB or local volume"
+    effort: 3_days
+    files:
+      - server/_shared/r2.ts            # replace with postgres upsert or fs.writeFile
+      - scripts/seed-*.mjs              # update storage calls
+    env_changes:
+      remove: [R2_BUCKET, R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY]
+      add:    [DATABASE_URL]  # postgres://...
+
+  step_3_llm:
+    description: "Drop OpenRouter; route all LLM calls through Groq only"
+    effort: 1_day
+    files:
+      - server/_shared/llm.ts           # remove openrouter branch
+      - scripts/seed-forecasts.mjs      # remove OPENROUTER env references
+    env_changes:
+      remove: [FORECAST_LLM_MODEL_OPENROUTER, FORECAST_LLM_*_OPENROUTER]
+      keep:   [GROQ_API_KEY, ANTHROPIC_API_KEY]
+
+  step_4_convex:
+    description: "Replace Convex reactive DB with postgres"
+    effort: 5_days
+    files:
+      - convex/                          # export schema; migrate to postgres
+      - src/lib/convex*.ts              # replace with REST API calls to own backend
+    env_changes:
+      remove: [CONVEX_URL, CONVEX_DEPLOY_KEY]
+      add:    [DATABASE_URL]
+
+  step_5_payments:
+    description: "Replace Dodo Payments; initially gate isPremium via env flag"
+    effort: 1_day
+    files:
+      - server/_shared/premium-check.ts # add FORCE_PREMIUM_USERIDS env override
+    notes: >
+      Set FORCE_PREMIUM_USERIDS=* to make everyone premium during beta.
+      Implement Stripe later when billing is needed.
+    env_changes:
+      remove: [DODO_PAYMENTS_*]
+      add:    [FORCE_PREMIUM_USERIDS]   # optional; comma-separated or "*"
+
+  step_6_platform:
+    description: "Move from Vercel to Railway (single platform)"
+    effort: 3_days
+    files:
+      - Dockerfile.app                   # new: Express server wrapping edge handlers
+      - railway.toml                     # add [app] service
+      - vercel.json                      # deprecate (keep for fallback)
+    notes: >
+      Already have docker/build-handlers.mjs compiling edge functions to CJS.
+      Wrap with Express router matching vercel.json routes.
+
+# ──────────────────────────────────────────────
+# ARCHITECTURE SUMMARY (post-migration)
+# ──────────────────────────────────────────────
+architecture_target:
+  services:
+    - name: app
+      runtime: node:22
+      role: "Frontend SPA static files + API handler (Express)"
+      port: 3000
+    - name: worker
+      runtime: node:22
+      role: "Cron seed jobs (all seed-*.mjs)"
+      schedule: "via Railway cron"
+    - name: redis
+      runtime: redis:7
+      role: "Cache + task queue + bootstrap data"
+    - name: postgres
+      runtime: postgres:16
+      role: "User records, settings, billing state, large seed artifacts"
+
+  data_flow: >
+    seed workers → Redis (hot cache, TTL-keyed) → API handlers → SPA frontend
+    seed workers → postgres (cold storage, seed artifacts)
+    user requests → Clerk JWT verify → API handler → Redis hit or upstream fetch
+
+  cache_strategy:
+    l1: "module-scope Map (in-process, warm invocations only)"
+    l2: "Redis (cross-request, TTL per data type)"
+    l3: "postgres JSONB (large artifacts, infrequent reads)"
+    l4: "upstream API (fallback, rate-limited)"
+
+  llm_routing:
+    primary: groq          # llama-3.1-70b-versatile, 6000 TPM free
+    fallback: anthropic    # claude-haiku-4-5 for overflow
+    reasoning: groq        # deepseek-r1 or qwen for reasoning tasks
+    simulation: groq       # separate env var: FORECAST_LLM_SIMULATION_MODEL_GROQ
