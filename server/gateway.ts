@@ -81,6 +81,17 @@ const RPC_CACHE_TIER: Record<string, CacheTier> = {
 
   '/api/unrest/v1/list-unrest-events': 'slow',
   '/api/cyber/v1/list-cyber-threats': 'slow',
+
+  // New domains (sauron manifest phase 2)
+  '/api/ransomware/v1/list-ransomware-victims': 'slow',
+  '/api/breach/v1/list-breaches': 'daily',
+  '/api/social-pulse/v1/list-social-posts': 'fast',
+  '/api/space-weather/v1/get-space-weather': 'slow',
+  '/api/news-aggregator/v1/list-news-articles': 'fast',
+  '/api/network-exposure/v1/list-network-exposure': 'slow',
+  '/api/crypto-intel/v1/get-crypto-intel': 'slow',
+  '/api/satellite-tracker/v1/list-satellites': 'slow',
+  '/api/telegram/v1/list-telegram-posts': 'fast',
   '/api/conflict/v1/list-acled-events': 'slow',
   '/api/military/v1/get-theater-posture': 'slow',
   '/api/infrastructure/v1/get-temporal-baseline': 'slow',
