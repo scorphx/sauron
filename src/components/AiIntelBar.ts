@@ -17,12 +17,12 @@ interface IntelResult {
 export class AiIntelBar {
   private el: HTMLElement;
   private input: HTMLInputElement;
-  private spinner: HTMLElement;
+  private _spinner: HTMLElement;
   private result: HTMLElement;
   private loading = false;
   private dismissTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private container: HTMLElement) {
+  constructor(container: HTMLElement) {
     this.el = document.createElement('div');
     this.el.className = 'ai-intel-bar';
     this.el.innerHTML = `
@@ -45,7 +45,7 @@ export class AiIntelBar {
     `;
 
     this.input = this.el.querySelector<HTMLInputElement>('.ai-intel-input')!;
-    this.spinner = this.el.querySelector<HTMLElement>('.ai-intel-spinner')!;
+    this._spinner = this.el.querySelector<HTMLElement>('.ai-intel-spinner')!;
     this.result = this.el.querySelector<HTMLElement>('.ai-intel-result')!;
 
     this.input.addEventListener('keydown', (e) => {
