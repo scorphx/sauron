@@ -1611,3 +1611,68 @@ button {
   }
 }
 
+/* ============================================================
+   MINIMAL KINETIC MODE
+   No header. No panels. Just the globe.
+   Everything else is discoverable — Palantir-style.
+   ============================================================ */
+
+/* ── Kill the top nav bar entirely ── */
+.header {
+  display: none !important;
+}
+
+/* ── Main content fills full viewport (no header gap) ── */
+.main-content {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+}
+
+/* ── Hide the "GLOBAL SITUATION" title bar ── */
+.map-section .panel-header {
+  display: none !important;
+}
+
+/* ── AI intel bar: full-width floating bar flush to top ── */
+#aiIntelBarMount {
+  top: 0 !important;
+  right: 0 !important;
+}
+
+/* ── Hide right panels entirely ── */
+.panels-grid {
+  display: none !important;
+}
+
+/* ── Map controls: flush to the right edge ── */
+.maplibregl-ctrl-top-right {
+  right: 8px !important;
+}
+.maplibregl-ctrl-bottom-right {
+  right: 8px !important;
+}
+
+/* ── Map bottom grid: full width ── */
+.map-bottom-grid {
+  right: 0 !important;
+}
+
+/* ── Layer toggles stay floating (they are the HUD) ── */
+.deckgl-layer-toggles,
+.layer-toggles {
+  z-index: 30 !important;
+  /* Slightly more opaque so they read over the globe */
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
+/* ── Mobile menu trigger: hide since header is gone ── */
+.mobile-menu-btn,
+.hamburger-btn,
+[class*="mobile-menu-trigger"] {
+  display: none !important;
+}
+
+/* ── Search FAB: hide (no nav, no search bar) ── */
+.search-mobile-fab {
+  display: none !important;
+}
