@@ -899,3 +899,517 @@ body {
   );
   opacity: 1;
 }
+
+/* ============================================================
+   Phase 5 — SAURON Identity: Void Black + Amber Intel Terminal
+   Complete visual overhaul. Not glass, not navy. Pure SAURON.
+   ============================================================ */
+
+/* ── Override root variables: amber accent, void black ── */
+:root {
+  --accent: #f0a000;
+  --accent-dim: rgba(240, 160, 0, 0.12);
+  --bg: #050505;
+  --bg-secondary: #0a0a0a;
+  --glass-bg: rgba(5, 5, 5, 0.97);
+  --glass-border: rgba(240, 160, 0, 0.14);
+  --glass-shadow: 0 0 0 1px rgba(240, 160, 0, 0.07),
+                  0 8px 40px rgba(0, 0, 0, 0.9);
+  --glass-shadow-lg: 0 0 0 1px rgba(240, 160, 0, 0.1),
+                     0 24px 60px rgba(0, 0, 0, 0.95);
+  --text: #b8cad6;
+  --text-secondary: #5c7080;
+  --text-dim: #354550;
+  --scrollbar-thumb: rgba(240, 160, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(240, 160, 0, 0.3);
+  --radius-md: 1px;
+  --radius-sm: 0px;
+  --radius-lg: 2px;
+}
+
+/* ── Body: pure void ── */
+body {
+  background: #000000 !important;
+  font-family: 'Courier New', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace !important;
+}
+
+/* ── Header: black command bar with amber rule ── */
+.header {
+  height: 38px !important;
+  background: #000000 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.28) !important;
+  box-shadow: 0 1px 0 rgba(240, 160, 0, 0.06) !important;
+}
+
+.header,
+.header-left,
+.header-center,
+.header-right,
+.header *,
+.header button,
+.header span,
+.header select,
+.header label {
+  font-family: 'Courier New', 'SF Mono', 'Fira Code', monospace !important;
+}
+
+/* ── Logo: amber monospace, uppercase, no italic ── */
+.logo,
+.logo-mobile {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-style: normal !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #f0a000 !important;
+  text-transform: uppercase !important;
+  opacity: 1 !important;
+}
+
+/* ── Header version badge: amber dim ── */
+.logo-version,
+[class*="version"] {
+  color: rgba(240, 160, 0, 0.45) !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Status dot: amber pulse ── */
+.status-dot,
+[class*="dot-live"],
+[class*="status-live"] {
+  background: #f0a000 !important;
+  box-shadow: 0 0 0 0 rgba(240, 160, 0, 0.5) !important;
+}
+
+@keyframes signal-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 160, 0, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(240, 160, 0, 0); }
+}
+
+/* ── Region selector / search btn: terminal style ── */
+.search-btn,
+.focus-select,
+select {
+  font-family: 'Courier New', monospace !important;
+  background: rgba(10, 10, 10, 0.95) !important;
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  color: #8a9ca6 !important;
+  font-size: 11px !important;
+}
+
+.search-btn:hover {
+  border-color: rgba(240, 160, 0, 0.45) !important;
+  color: #f0a000 !important;
+}
+
+/* ── Panel: hard-edged terminal window ── */
+.panel {
+  background: rgba(3, 3, 3, 0.98) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(240, 160, 0, 0.1) !important;
+  border-left: 2px solid rgba(240, 160, 0, 0.45) !important;
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 0 0 transparent,
+    0 4px 24px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* ── Panel header: amber tint bar ── */
+.panel-header {
+  background: rgba(240, 160, 0, 0.035) !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.1) !important;
+  padding: 7px 10px !important;
+}
+
+/* ── Panel title: amber mono uppercase ── */
+.panel-title {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.14em !important;
+  color: rgba(240, 160, 0, 0.65) !important;
+  text-shadow: 0 0 8px rgba(240, 160, 0, 0.3) !important;
+}
+
+/* ── Panel count badge: amber ── */
+.panel-count {
+  background: rgba(240, 160, 0, 0.08) !important;
+  border: 1px solid rgba(240, 160, 0, 0.18) !important;
+  color: rgba(240, 160, 0, 0.6) !important;
+  border-radius: 0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Panel content: mono feel ── */
+.panel-content,
+.panel-body {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+}
+
+/* ── Panel: new data → amber accent line ── */
+.panel.has-new .panel-header {
+  background: rgba(240, 160, 0, 0.06) !important;
+  border-bottom-color: rgba(240, 160, 0, 0.22) !important;
+}
+
+/* ── Panel tabs: terminal tab ── */
+.panel-tab {
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.panel-tab.active {
+  border-bottom-color: #f0a000 !important;
+  color: #f0a000 !important;
+}
+
+/* ── Panels grid background: pure black ── */
+.panels-grid {
+  background: #000000 !important;
+}
+
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .panels-grid {
+    background: #000000 !important;
+    border-left: 1px solid rgba(240, 160, 0, 0.1) !important;
+  }
+}
+
+/* ── Map section: zero border radius ── */
+.map-section {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Map panel header: dark with amber rule ── */
+.map-section .panel-header,
+.main-content:not(.map-hidden) .map-section .panel-header {
+  background: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.2) !important;
+}
+
+/* ── "Global Situation" title and clock: amber ── */
+.panel-title[class*="map"],
+.map-section .panel-title {
+  color: rgba(240, 160, 0, 0.7) !important;
+}
+
+/* ── Map header clock: amber mono ── */
+.header-clock {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(240, 160, 0, 0.55) !important;
+}
+
+/* ── Width drag handle: amber ── */
+.map-width-resize-handle {
+  background: rgba(240, 160, 0, 0.08) !important;
+}
+
+.map-width-resize-handle:hover,
+.map-width-resize-handle.active {
+  background: rgba(240, 160, 0, 0.4) !important;
+}
+
+/* ── Layer toggles: terminal panel ── */
+.deckgl-layer-toggles,
+.layer-toggles {
+  background: rgba(0, 0, 0, 0.97) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(240, 160, 0, 0.18) !important;
+  border-left: 2px solid rgba(240, 160, 0, 0.5) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+}
+
+.deckgl-layer-toggles .toggle-header,
+.layer-toggles .toggle-header {
+  font-family: 'Courier New', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: rgba(240, 160, 0, 0.6) !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.12) !important;
+}
+
+.deckgl-layer-toggles .layer-search,
+.layer-toggles .layer-search {
+  font-family: 'Courier New', monospace !important;
+  background: rgba(8, 8, 8, 0.98) !important;
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  color: #8a9ca6 !important;
+}
+
+.deckgl-layer-toggles .layer-search:focus,
+.layer-toggles .layer-search:focus {
+  border-color: rgba(240, 160, 0, 0.5) !important;
+  box-shadow: none !important;
+}
+
+.layer-toggle {
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ── Inputs globally: terminal look ── */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+select,
+textarea {
+  background: rgba(8, 8, 8, 0.98) !important;
+  border: 1px solid rgba(240, 160, 0, 0.18) !important;
+  border-radius: 0 !important;
+  color: #b8cad6 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus {
+  border-color: rgba(240, 160, 0, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(240, 160, 0, 0.06) !important;
+  outline: none !important;
+}
+
+/* ── Selection + focus ring: amber ── */
+::selection {
+  background: rgba(240, 160, 0, 0.22) !important;
+}
+
+:focus-visible {
+  outline: 1px solid rgba(240, 160, 0, 0.6) !important;
+  outline-offset: 1px !important;
+  border-radius: 0 !important;
+}
+
+/* ── Links: amber ── */
+a {
+  color: rgba(240, 160, 0, 0.8) !important;
+}
+
+a:hover {
+  color: #f0a000 !important;
+}
+
+/* ── Scrollbar: amber ── */
+::-webkit-scrollbar-thumb {
+  background: rgba(240, 160, 0, 0.18) !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(240, 160, 0, 0.35) !important;
+}
+
+/* ── AI Intel Bar: terminal feel ── */
+.ai-intel-bar {
+  background: rgba(0, 0, 0, 0.95) !important;
+  backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.2) !important;
+}
+
+.ai-intel-input {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-size: 11px !important;
+  color: #b8cad6 !important;
+  caret-color: #f0a000 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.ai-intel-input::placeholder {
+  color: rgba(240, 160, 0, 0.3) !important;
+  font-style: italic;
+}
+
+.ai-intel-icon {
+  color: rgba(240, 160, 0, 0.4) !important;
+  opacity: 1 !important;
+}
+
+.ai-intel-bar:focus-within .ai-intel-icon {
+  color: #f0a000 !important;
+}
+
+.ai-intel-result.visible {
+  border-top: 1px solid rgba(240, 160, 0, 0.18) !important;
+  color: #8a9ca6 !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 11px !important;
+}
+
+.ai-intel-result.visible::before {
+  color: #f0a000 !important;
+}
+
+.ai-intel-spinner {
+  border: 1.5px solid rgba(240, 160, 0, 0.15) !important;
+  border-top-color: #f0a000 !important;
+}
+
+.ai-intel-hint {
+  background: rgba(240, 160, 0, 0.06) !important;
+  border: 1px solid rgba(240, 160, 0, 0.14) !important;
+  border-radius: 0 !important;
+  color: rgba(240, 160, 0, 0.5) !important;
+}
+
+/* ── Map vignette: void edges ── */
+.map-container::after {
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.22) 78%,
+      rgba(0, 0, 0, 0.55) 100%
+    ) !important;
+}
+
+/* ── Panel scan-lines: tighter for CRT feel ── */
+.panel::before {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(240, 160, 0, 0.012) 2px,
+    rgba(240, 160, 0, 0.012) 3px
+  ) !important;
+}
+
+/* ── Site footer ── */
+.site-footer {
+  border-top: 1px solid rgba(240, 160, 0, 0.08) !important;
+  background: #000000 !important;
+}
+
+.site-footer-name {
+  font-family: 'Courier New', monospace !important;
+  letter-spacing: 0.15em !important;
+  color: rgba(240, 160, 0, 0.4) !important;
+  font-weight: 700 !important;
+}
+
+.site-footer-sub,
+.site-footer-copy {
+  font-family: 'Courier New', monospace !important;
+  color: rgba(240, 160, 0, 0.2) !important;
+  opacity: 1 !important;
+}
+
+/* ── 2D/3D toggle: amber ── */
+.map-dim-btn.active {
+  background: rgba(240, 160, 0, 0.15) !important;
+  color: #f0a000 !important;
+  border-color: rgba(240, 160, 0, 0.4) !important;
+}
+
+/* ── Panel resize handle: amber ── */
+.panel-resize-handle:hover,
+.panel-resize-handle.active {
+  background: linear-gradient(to top, rgba(240, 160, 0, 0.28), transparent) !important;
+}
+
+/* ── Tooltip / popover: terminal ── */
+[class*="tooltip"],
+[class*="popover"] {
+  background: rgba(3, 3, 3, 0.99) !important;
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Map dimension toggle container ── */
+.map-dimension-toggle {
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+
+.map-dim-btn {
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 0 !important;
+  color: rgba(240, 160, 0, 0.45) !important;
+}
+
+/* ── Country intel card on right panel: terminal readout ── */
+.cdp-card,
+.cdp-card-body,
+[class*="cdp-"],
+[class*="country-"],
+[class*="intelligence"] {
+  font-family: 'Courier New', monospace !important;
+  border-radius: 0 !important;
+}
+
+.cdp-card-title,
+[class*="cdp-card-title"] {
+  font-family: 'Courier New', monospace !important;
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.14em !important;
+  color: rgba(240, 160, 0, 0.55) !important;
+}
+
+/* ── Mobile menu: black terminal ── */
+.mobile-menu {
+  background: #000000 !important;
+  border-right: 1px solid rgba(240, 160, 0, 0.18) !important;
+}
+
+.mobile-menu-title {
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #f0a000 !important;
+}
+
+/* ── Buttons: sharp ── */
+button {
+  border-radius: 0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Map header panel title text ── */
+.panel-header .panel-title {
+  color: rgba(240, 160, 0, 0.6) !important;
+}
+
+/* ── Tighter panel entrance ── */
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── CRT body-level scan-line overlay ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 3px
+  );
+  opacity: 0.4;
+}
