@@ -5,65 +5,84 @@
    Theme Colors — overridden by [data-theme="light"] below
    ============================================================ */
 :root {
-  /* Backgrounds */
-  --bg: #0a0a0a;
-  --bg-secondary: #111;
-  --surface: #141414;
-  --surface-hover: #1e1e1e;
-  --surface-active: #1a1a2e;
+  /* Backgrounds — deep navy void */
+  --bg: #070d1a;
+  --bg-secondary: #0c1526;
+  --surface: #0f1c2e;
+  --surface-hover: #152438;
+  --surface-active: #1a2d45;
 
-  /* Borders */
-  --border: #2a2a2a;
-  --border-strong: #444;
-  --border-subtle: #1a1a1a;
+  /* Borders — translucent white, not grey */
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-subtle: rgba(255, 255, 255, 0.03);
 
-  /* Text */
-  --text: #e8e8e8;
-  --text-secondary: #ccc;
-  --text-dim: #888;
-  --text-muted: #666;
-  --text-faint: #555;
-  --text-ghost: #444;
-  --accent: #fff;
+  /* Text — cool-white hierarchy */
+  --text: #dde6f0;
+  --text-secondary: #8ea8c0;
+  --text-dim: #546e85;
+  --text-muted: #3a5268;
+  --text-faint: #263a4a;
+  --text-ghost: #1a2a38;
+  --accent: #00c9b1;
 
   /* Overlays & shadows */
-  --overlay-subtle: rgba(255, 255, 255, 0.03);
-  --overlay-light: rgba(255, 255, 255, 0.05);
-  --overlay-medium: rgba(255, 255, 255, 0.1);
-  --overlay-heavy: rgba(255, 255, 255, 0.2);
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --darken-light: rgba(0, 0, 0, 0.15);
-  --darken-medium: rgba(0, 0, 0, 0.2);
-  --darken-heavy: rgba(0, 0, 0, 0.3);
+  --overlay-subtle: rgba(0, 201, 177, 0.03);
+  --overlay-light: rgba(255, 255, 255, 0.04);
+  --overlay-medium: rgba(255, 255, 255, 0.08);
+  --overlay-heavy: rgba(255, 255, 255, 0.15);
+  --shadow-color: rgba(0, 0, 0, 0.65);
+  --darken-light: rgba(0, 0, 0, 0.2);
+  --darken-medium: rgba(0, 0, 0, 0.3);
+  --darken-heavy: rgba(0, 0, 0, 0.45);
 
   /* Scrollbar */
-  --scrollbar-thumb: #333;
-  --scrollbar-thumb-hover: #555;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
 
   /* Input */
-  --input-bg: #1a1a1a;
+  --input-bg: rgba(255, 255, 255, 0.05);
 
   /* Panels */
-  --panel-bg: #141414;
-  --panel-border: #2a2a2a;
+  --panel-bg: #0f1c2e;
+  --panel-border: rgba(255, 255, 255, 0.07);
 
   /* Map */
-  --map-bg: #020a08;
-  --map-grid: #0a2a20;
-  --map-country: #0a2018;
-  --map-stroke: #0f5040;
+  --map-bg: #04080f;
+  --map-grid: #0a1525;
+  --map-country: #0c1830;
+  --map-stroke: #1a3050;
 
-  /* Font stack */
+  /* Glass system */
+  --glass-bg: rgba(10, 18, 32, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(20px) saturate(1.4);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --glass-shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+
+  /* Corner radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* Typography */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', monospace;
-  /* Base body font, controlled by font preference (mono vs system) */
-  --font-body-base: var(--font-mono);
+  /* Default body font: Inter for UI clarity */
+  --font-body-base: var(--font-ui);
   /* Effective body font used throughout the app */
   --font-body: var(--font-body-base);
 }
 
-/* System font selection via data-font attribute (avoids inline style specificity issues with RTL) */
+/* Font preference overrides via data-font attribute */
 [data-font="system"] {
   --font-body-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-font="mono"] {
+  --font-body-base: var(--font-mono);
 }
 
 [dir="rtl"] {
@@ -79,38 +98,38 @@
    Semantic Colors — dark-mode defaults, light overrides below
    ============================================================ */
 :root {
-  /* Severity levels */
-  --semantic-critical: #ff4444;
-  --semantic-high: #ff8800;
-  --semantic-elevated: #ffaa00;
-  --semantic-normal: #44aa44;
-  --semantic-low: #3388ff;
-  --semantic-info: #3b82f6;
-  --semantic-positive: #44ff88;
+  /* Severity levels — refined palette, rose/amber/teal */
+  --semantic-critical: #ff5470;
+  --semantic-high: #ff9240;
+  --semantic-elevated: #ffd166;
+  --semantic-normal: #00c9b1;
+  --semantic-low: #5ba4f5;
+  --semantic-info: #a78bfa;
+  --semantic-positive: #00c9b1;
 
   /* Threat levels */
-  --threat-critical: #ef4444;
-  --threat-high: #f97316;
-  --threat-medium: #eab308;
-  --threat-low: #22c55e;
-  --threat-info: #3b82f6;
+  --threat-critical: #ff5470;
+  --threat-high: #ff9240;
+  --threat-medium: #ffd166;
+  --threat-low: #00c9b1;
+  --threat-info: #5ba4f5;
 
   /* DEFCON levels */
-  --defcon-1: #ff0040;
-  --defcon-2: #ff4400;
-  --defcon-3: #ffaa00;
-  --defcon-4: #00aaff;
-  --defcon-5: #2d8a6e;
+  --defcon-1: #ff5470;
+  --defcon-2: #ff9240;
+  --defcon-3: #ffd166;
+  --defcon-4: #5ba4f5;
+  --defcon-5: #00c9b1;
 
   /* Status indicators */
-  --status-live: #44ff88;
-  --status-cached: #ffaa00;
-  --status-unavailable: #ff4444;
+  --status-live: #00c9b1;
+  --status-cached: #ffd166;
+  --status-unavailable: #ff5470;
 
-  /* Legacy color aliases (used by existing var() references) */
-  --red: #ff4444;
-  --green: #44ff88;
-  --yellow: #ffaa00;
+  /* Legacy color aliases */
+  --red: #ff5470;
+  --green: #00c9b1;
+  --yellow: #ffd166;
 }
 
 /* ============================================================
