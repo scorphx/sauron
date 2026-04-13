@@ -901,9 +901,534 @@ body {
 }
 
 /* ============================================================
-   Phase 5 — SAURON Identity: Void Black + Amber Intel Terminal
-   Complete visual overhaul. Not glass, not navy. Pure SAURON.
+   Phase 5 — SAURON Monokai: warm charcoal + soft amber glow
+   Inspired by Monokai. Readable. Rounded. Inviting.
    ============================================================ */
+
+/* ── Monokai-inspired root variables ── */
+:root {
+  /* Monokai warm charcoal palette */
+  --bg:            #272822;
+  --bg-secondary:  #1e1f1a;
+  --bg-panel:      #2d2e27;
+  --bg-panel-alt:  #33342c;
+
+  /* Accent: Monokai orange (warm, readable) */
+  --accent:        #fd971f;
+  --accent-dim:    rgba(253, 151, 31, 0.14);
+  --accent-green:  #a6e22e;
+  --accent-blue:   #66d9ef;
+  --accent-pink:   #f92672;
+
+  /* Text: Monokai off-white scale */
+  --text:           #f8f8f2;
+  --text-secondary: #b0ae9d;
+  --text-dim:       #75715e;
+  --text-muted:     #58564d;
+
+  /* Glass / surface */
+  --glass-bg:     rgba(45, 46, 39, 0.92);
+  --glass-border: rgba(253, 151, 31, 0.16);
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.45),
+                  0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glass-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55),
+                     0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  /* Radii: soft and rounded */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Fonts: Inter for UI, mono for data */
+  --font-ui:      'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-display: 'Inter', system-ui, sans-serif;
+
+  --scrollbar-thumb:       rgba(253, 151, 31, 0.2);
+  --scrollbar-thumb-hover: rgba(253, 151, 31, 0.38);
+}
+
+/* ── Body: Monokai warm charcoal ── */
+body {
+  background: #1e1f1a !important;
+  font-family: var(--font-ui) !important;
+  color: var(--text) !important;
+}
+
+/* ── Subtle radial warmth in bg ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 30% 0%, rgba(253, 151, 31, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(166, 226, 46, 0.03) 0%, transparent 50%),
+    #1e1f1a;
+}
+
+/* ── Kill the CRT body scanlines ── */
+body::after {
+  display: none !important;
+}
+
+/* ── Header: warm charcoal bar ── */
+.header {
+  height: 46px !important;
+  background: rgba(30, 31, 26, 0.96) !important;
+  backdrop-filter: blur(20px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.18) !important;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+.header,
+.header * {
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Logo: Inter, warm, not italic ── */
+.logo,
+.logo-mobile {
+  font-family: var(--font-ui) !important;
+  font-style: normal !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #fd971f !important;
+  opacity: 1 !important;
+}
+
+/* ── Status dot: green live pulse ── */
+.status-dot,
+[class*="dot-live"],
+[class*="status-live"] {
+  background: #a6e22e !important;
+  box-shadow: 0 0 0 0 rgba(166, 226, 46, 0.5) !important;
+}
+
+@keyframes signal-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(166, 226, 46, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(166, 226, 46, 0); }
+}
+
+/* ── Header clock: Inter tabular ── */
+.header-clock {
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.03em !important;
+  color: rgba(253, 151, 31, 0.65) !important;
+}
+
+/* ── Search / region buttons ── */
+.search-btn,
+.focus-select,
+select {
+  font-family: var(--font-ui) !important;
+  background: rgba(39, 40, 34, 0.9) !important;
+  border: 1px solid rgba(253, 151, 31, 0.2) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  transition: border-color 0.15s, color 0.15s !important;
+}
+
+.search-btn:hover {
+  border-color: rgba(253, 151, 31, 0.45) !important;
+  color: #fd971f !important;
+}
+
+/* ── Panel: warm glass card ── */
+.panel {
+  background: rgba(45, 46, 39, 0.94) !important;
+  backdrop-filter: blur(18px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.3) !important;
+  border: 1px solid rgba(253, 151, 31, 0.12) !important;
+  border-left: 2px solid rgba(253, 151, 31, 0.35) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
+}
+
+/* ── Panel header: subtle warm gradient ── */
+.panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(253, 151, 31, 0.05) 0%,
+    rgba(253, 151, 31, 0.02) 100%
+  ) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.1) !important;
+  padding: 9px 12px !important;
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+
+/* ── Panel title: Inter, warm uppercase ── */
+.panel-title {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(253, 151, 31, 0.75) !important;
+  text-shadow: none !important;
+}
+
+/* ── Panel count badge ── */
+.panel-count {
+  background: rgba(253, 151, 31, 0.1) !important;
+  border: 1px solid rgba(253, 151, 31, 0.2) !important;
+  color: rgba(253, 151, 31, 0.7) !important;
+  border-radius: 4px !important;
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Panel content ── */
+.panel-content,
+.panel-body {
+  font-family: var(--font-ui) !important;
+  color: var(--text) !important;
+}
+
+/* ── Panel new-data accent ── */
+.panel.has-new .panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(166, 226, 46, 0.06) 0%,
+    rgba(166, 226, 46, 0.02) 100%
+  ) !important;
+  border-bottom-color: rgba(166, 226, 46, 0.2) !important;
+}
+
+/* ── Panel tabs ── */
+.panel-tab {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.panel-tab.active {
+  border-bottom-color: #fd971f !important;
+  color: #fd971f !important;
+}
+
+/* ── Panels grid background ── */
+.panels-grid {
+  background: rgba(24, 25, 20, 0.6) !important;
+}
+
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .panels-grid {
+    background: rgba(24, 25, 20, 0.7) !important;
+    border-left: 1px solid rgba(253, 151, 31, 0.08) !important;
+  }
+}
+
+/* ── Map section: warm edges ── */
+.map-section {
+  border-radius: var(--radius-md) !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* ── Map panel header ── */
+.map-section .panel-header,
+.main-content:not(.map-hidden) .map-section .panel-header {
+  background: rgba(30, 31, 26, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: 0 !important;
+}
+
+/* ── Map panel title ── */
+.map-section .panel-title {
+  color: rgba(253, 151, 31, 0.75) !important;
+}
+
+/* ── Width drag handle ── */
+.map-width-resize-handle {
+  background: rgba(253, 151, 31, 0.06) !important;
+}
+
+.map-width-resize-handle:hover,
+.map-width-resize-handle.active {
+  background: rgba(253, 151, 31, 0.32) !important;
+}
+
+/* ── Layer toggles: warm glass ── */
+.deckgl-layer-toggles,
+.layer-toggles {
+  background: rgba(39, 40, 34, 0.96) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(253, 151, 31, 0.16) !important;
+  border-left: 2px solid rgba(253, 151, 31, 0.4) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.deckgl-layer-toggles .toggle-header,
+.layer-toggles .toggle-header {
+  font-family: var(--font-ui) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: rgba(253, 151, 31, 0.65) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.1) !important;
+}
+
+.deckgl-layer-toggles .layer-search,
+.layer-toggles .layer-search {
+  font-family: var(--font-ui) !important;
+  background: rgba(30, 31, 26, 0.8) !important;
+  border: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-secondary) !important;
+}
+
+.deckgl-layer-toggles .layer-search:focus,
+.layer-toggles .layer-search:focus {
+  border-color: rgba(253, 151, 31, 0.45) !important;
+  box-shadow: 0 0 0 2px rgba(253, 151, 31, 0.08) !important;
+}
+
+.layer-toggle {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+}
+
+.layer-toggle:hover {
+  color: var(--text) !important;
+}
+
+/* ── Inputs: warm dark ── */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+select,
+textarea {
+  background: rgba(30, 31, 26, 0.85) !important;
+  border: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text) !important;
+  font-family: var(--font-ui) !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus {
+  border-color: rgba(253, 151, 31, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(253, 151, 31, 0.1) !important;
+  outline: none !important;
+}
+
+/* ── Selection + focus ── */
+::selection {
+  background: rgba(253, 151, 31, 0.25) !important;
+  color: var(--text) !important;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(253, 151, 31, 0.55) !important;
+  outline-offset: 2px !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Links ── */
+a {
+  color: #fd971f !important;
+}
+
+a:hover {
+  color: #ffb950 !important;
+}
+
+/* ── Scrollbar: warm orange ── */
+::-webkit-scrollbar-thumb {
+  background: rgba(253, 151, 31, 0.2) !important;
+  border-radius: 3px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(253, 151, 31, 0.38) !important;
+}
+
+/* ── AI Intel Bar ── */
+.ai-intel-bar {
+  background: rgba(30, 31, 26, 0.9) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.18) !important;
+}
+
+.ai-intel-input {
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  color: var(--text) !important;
+  caret-color: #fd971f !important;
+}
+
+.ai-intel-input::placeholder {
+  color: rgba(253, 151, 31, 0.35) !important;
+  font-style: italic !important;
+}
+
+.ai-intel-icon {
+  color: rgba(253, 151, 31, 0.5) !important;
+  opacity: 1 !important;
+}
+
+.ai-intel-bar:focus-within .ai-intel-icon {
+  color: #fd971f !important;
+}
+
+.ai-intel-result.visible {
+  border-top: 1px solid rgba(253, 151, 31, 0.15) !important;
+  color: var(--text-secondary) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+}
+
+.ai-intel-result.visible::before {
+  color: #fd971f !important;
+}
+
+.ai-intel-spinner {
+  border: 1.5px solid rgba(253, 151, 31, 0.18) !important;
+  border-top-color: #fd971f !important;
+}
+
+.ai-intel-hint {
+  background: rgba(253, 151, 31, 0.07) !important;
+  border: 1px solid rgba(253, 151, 31, 0.16) !important;
+  border-radius: var(--radius-sm) !important;
+  color: rgba(253, 151, 31, 0.5) !important;
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Map vignette: warm edges ── */
+.map-container::after {
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,
+      transparent 55%,
+      rgba(24, 25, 20, 0.18) 80%,
+      rgba(24, 25, 20, 0.42) 100%
+    ) !important;
+}
+
+/* ── Panel scan-lines: very subtle ── */
+.panel::before {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(253, 151, 31, 0.008) 3px,
+    rgba(253, 151, 31, 0.008) 4px
+  ) !important;
+}
+
+/* ── Site footer ── */
+.site-footer {
+  border-top: 1px solid rgba(253, 151, 31, 0.08) !important;
+  background: rgba(24, 25, 20, 0.9) !important;
+}
+
+.site-footer-name {
+  font-family: var(--font-ui) !important;
+  letter-spacing: 0.12em !important;
+  color: rgba(253, 151, 31, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+.site-footer-sub,
+.site-footer-copy {
+  font-family: var(--font-ui) !important;
+  color: rgba(117, 113, 94, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* ── 2D/3D toggle ── */
+.map-dimension-toggle {
+  border: 1px solid rgba(253, 151, 31, 0.2) !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden !important;
+}
+
+.map-dim-btn {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  border-radius: 0 !important;
+  color: rgba(253, 151, 31, 0.5) !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+
+.map-dim-btn.active {
+  background: rgba(253, 151, 31, 0.16) !important;
+  color: #fd971f !important;
+}
+
+.map-dim-btn:hover:not(.active) {
+  background: rgba(253, 151, 31, 0.08) !important;
+  color: rgba(253, 151, 31, 0.75) !important;
+}
+
+/* ── Buttons: rounded + warm ── */
+button {
+  font-family: var(--font-ui) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Tooltip ── */
+[class*="tooltip"],
+[class*="popover"] {
+  background: rgba(39, 40, 34, 0.98) !important;
+  border: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-ui) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ── cdp card elements: warm + readable ── */
+.cdp-card-title,
+[class*="cdp-card-title"] {
+  font-family: var(--font-ui) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(253, 151, 31, 0.6) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Mobile menu ── */
+.mobile-menu {
+  background: rgba(30, 31, 26, 0.98) !important;
+  border-right: 1px solid rgba(253, 151, 31, 0.14) !important;
+}
+
+.mobile-menu-title {
+  font-family: var(--font-ui) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  color: #fd971f !important;
+}
+
+/* ── Panel entrance: slide in from bottom like cards ── */
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* ── Override root variables: amber accent, void black ── */
 :root {
