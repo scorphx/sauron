@@ -243,3 +243,216 @@ select:focus {
   font-size: 11px;
   font-weight: 500;
 }
+
+/* ============================================================
+   Phase 2 — Layout: Arc / Apple spatial design
+   ============================================================ */
+
+/* ── Body: void gradient, not flat black ── */
+body {
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 0%, #0d1e35 0%, transparent 65%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, #0a1628 0%, transparent 55%),
+    #070d1a;
+}
+
+/* ── Header: frosted glass bar ── */
+.header {
+  height: 48px;
+  padding: 0 20px;
+  background: rgba(7, 13, 26, 0.82);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Every piece of text in the header: Inter */
+.header,
+.header-left,
+.header-center,
+.header-right,
+.header label,
+.header span,
+.header button,
+.header select {
+  font-family: var(--font-ui);
+}
+
+/* ── Logo: editorial, not terminal ── */
+.logo,
+.logo-mobile {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+/* ── Header clock: Inter tabular ── */
+.header-clock {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+
+/* ── Search bar: glass ── */
+.search-wrapper,
+.search-input,
+input[class*="search"] {
+  font-family: var(--font-ui);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+/* ── Variant / focus dropdowns ── */
+.focus-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+
+.focus-select {
+  font-family: var(--font-ui);
+  border-radius: var(--radius-sm);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.09);
+  font-size: 12px;
+}
+
+/* ── Map section: rounded bottom, glass header, shadow ── */
+.map-section {
+  height: 58vh;
+  min-height: 390px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* Map section header: glass floating over the map */
+.map-section .panel-header {
+  background: rgba(7, 13, 26, 0.72);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0;
+}
+
+/* Map resize handle: pill indicator */
+.map-resize-handle {
+  height: 12px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.25));
+  cursor: ns-resize;
+}
+
+.map-resize-handle::after {
+  content: '';
+  width: 36px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  opacity: 1;
+  transition: background 0.2s, width 0.2s;
+}
+
+.map-resize-handle:hover::after {
+  background: var(--accent);
+  width: 48px;
+}
+
+/* ── Panel grid: spatial breathing room ── */
+.panels-grid {
+  gap: 10px;
+  padding: 10px 10px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-auto-rows: minmax(260px, 420px);
+}
+
+/* ── Panel content: more padding ── */
+.panel-content {
+  padding: 10px 12px;
+}
+
+/* ── Panel header font labels ── */
+.panel-header,
+.panel-header-left,
+.panel-header * {
+  font-family: var(--font-ui);
+}
+
+/* Keep data values monospace */
+.panel-content,
+.panel-content * {
+  font-family: inherit;
+}
+
+/* ── Site footer: clean, transparent ── */
+.site-footer {
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px 20px;
+  font-family: var(--font-ui);
+}
+
+.site-footer-name {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.site-footer-sub {
+  font-family: var(--font-ui);
+}
+
+/* ── Alert banner: Inter ── */
+[class*="alert"],
+[class*="banner"],
+[class*="toast"] {
+  font-family: var(--font-ui);
+}
+
+/* ── Stagger panel entrance animation ── */
+.panels-grid .panel:nth-child(1)  { animation-delay: 0ms; }
+.panels-grid .panel:nth-child(2)  { animation-delay: 30ms; }
+.panels-grid .panel:nth-child(3)  { animation-delay: 60ms; }
+.panels-grid .panel:nth-child(4)  { animation-delay: 90ms; }
+.panels-grid .panel:nth-child(5)  { animation-delay: 120ms; }
+.panels-grid .panel:nth-child(6)  { animation-delay: 150ms; }
+.panels-grid .panel:nth-child(7)  { animation-delay: 180ms; }
+.panels-grid .panel:nth-child(8)  { animation-delay: 210ms; }
+.panels-grid .panel:nth-child(9)  { animation-delay: 240ms; }
+.panels-grid .panel:nth-child(n+10) { animation-delay: 270ms; }
+
+/* ── Breakpoint: narrow screens ── */
+@media (max-width: 768px) {
+  .panels-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .map-section {
+    height: 45vh;
+    min-height: 280px;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .header {
+    height: 44px;
+    padding: 0 14px;
+  }
+}
+
+/* ── Reduced motion: kill animations ── */
+@media (prefers-reduced-motion: reduce) {
+  .panel { animation: none !important; }
+}
