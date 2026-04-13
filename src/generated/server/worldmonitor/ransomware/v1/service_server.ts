@@ -47,14 +47,14 @@ export interface ListRansomwareVictimsResponse {
 }
 
 export interface ServerContext { request: Request; }
-export interface ServerOptions { onError?: (err: unknown) => Response; }
+export interface ServerOptions { onError?: (error: unknown, req: Request) => Response | Promise<Response>; }
 export interface RouteDescriptor { method: string; path: string; handler: (req: Request) => Promise<Response>; }
 
 export interface RansomwareServiceHandler {
   listRansomwareVictims(ctx: ServerContext, req: ListRansomwareVictimsRequest): Promise<ListRansomwareVictimsResponse>;
 }
 
-function defaultError(err: unknown): Response {
+function defaultError(err: unknown, _req?: Request): Response {
   console.error('[ransomware]', err);
   return new Response(JSON.stringify({ error: 'internal' }), { status: 500, headers: { 'content-type': 'application/json' } });
 }
@@ -80,7 +80,7 @@ export function createRansomwareServiceRoutes(handler: RansomwareServiceHandler,
           };
           const resp = await handler.listRansomwareVictims(ctx, body);
           return new Response(JSON.stringify(resp), { headers: { 'content-type': 'application/json' } });
-        } catch (err) { return onError(err); }
+        } catch (err) { return onError(err, req); }
       },
     },
   ];

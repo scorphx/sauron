@@ -6,8 +6,9 @@ export async function getCryptoIntel(_ctx: ServerContext, req: GetCryptoIntelReq
   const seed = await getCachedJson(SEED_KEY, true) as GetCryptoIntelResponse | null;
   if (!seed?.stats) return empty;
   if (req.chain && seed.chainStats) {
-    const filtered = req.chain ? { [req.chain]: seed.chainStats[req.chain] } : seed.chainStats;
-    return { ...seed, chainStats: filtered };
+    const stat = seed.chainStats[req.chain];
+    if (!stat) return { ...seed, chainStats: {} };
+    return { ...seed, chainStats: { [req.chain]: stat } };
   }
   return seed;
 }

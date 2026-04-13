@@ -1,8 +1,7 @@
 import type { ServerContext, ListRansomwareVictimsRequest, ListRansomwareVictimsResponse } from '../../../../src/generated/server/worldmonitor/ransomware/v1/service_server';
 import { getCachedJson } from '../../../_shared/redis';
 
-const SEED_KEY  = 'ransomware:victims:v1';
-const GROUPS_KEY = 'ransomware:groups:v1';
+const SEED_KEY = 'ransomware:victims:v1';
 
 export async function listRansomwareVictims(
   _ctx: ServerContext,

@@ -5,10 +5,10 @@ export interface SpaceWeatherSummary { overallStatus: string; maxKpLast24h: numb
 export interface GetSpaceWeatherRequest { placeholder?: boolean; }
 export interface GetSpaceWeatherResponse { currentKp: KIndexEntry | null; kIndex: KIndexEntry[]; alerts: SpaceWeatherAlert[]; activeAlerts: SpaceWeatherAlert[]; solarRegions: { description: string }[]; summary: SpaceWeatherSummary; fetchedAt: string; }
 export interface ServerContext { request: Request; }
-export interface ServerOptions { onError?: (err: unknown) => Response; }
+export interface ServerOptions { onError?: (error: unknown, req: Request) => Response | Promise<Response>; }
 export interface RouteDescriptor { method: string; path: string; handler: (req: Request) => Promise<Response>; }
 export interface SpaceWeatherServiceHandler { getSpaceWeather(ctx: ServerContext, req: GetSpaceWeatherRequest): Promise<GetSpaceWeatherResponse>; }
-function defaultError(err: unknown): Response { console.error('[space-weather]', err); return new Response(JSON.stringify({ error: 'internal' }), { status: 500, headers: { 'content-type': 'application/json' } }); }
+function defaultError(err: unknown, _req?: Request): Response { console.error('[space-weather]', err); return new Response(JSON.stringify({ error: 'internal' }), { status: 500, headers: { 'content-type': 'application/json' } }); }
 export function createSpaceWeatherServiceRoutes(handler: SpaceWeatherServiceHandler, options?: ServerOptions): RouteDescriptor[] {
   const onError = options?.onError ?? defaultError;
   return [{ method: "GET", path: "/api/space-weather/v1/get-space-weather",
@@ -16,7 +16,7 @@ export function createSpaceWeatherServiceRoutes(handler: SpaceWeatherServiceHand
       try {
         const resp = await handler.getSpaceWeather({ request: req }, {});
         return new Response(JSON.stringify(resp), { headers: { 'content-type': 'application/json' } });
-      } catch (err) { return onError(err); }
+      } catch (err) { return onError(err, req); }
     },
   }];
 }
