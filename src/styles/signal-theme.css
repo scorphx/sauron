@@ -734,3 +734,168 @@ body {
     animation: signal-panel-enter 0.28s cubic-bezier(0.2, 0, 0, 1) both;
   }
 }
+
+/* ============================================================
+   AI Intel Bar — glass query input below map header
+   ============================================================ */
+
+#aiIntelBarMount {
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.ai-intel-bar {
+  display: flex;
+  flex-direction: column;
+  background: rgba(3, 6, 9, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0;
+}
+
+.ai-intel-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+}
+
+.ai-intel-icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: color 0.2s, opacity 0.2s;
+}
+
+.ai-intel-bar:focus-within .ai-intel-icon {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.ai-intel-input {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text);
+  caret-color: var(--accent);
+  letter-spacing: 0;
+  min-width: 0;
+}
+
+.ai-intel-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* Spinner: 12px ring, hidden by default */
+.ai-intel-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid rgba(0, 201, 177, 0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ai-intel-bar.loading .ai-intel-spinner {
+  opacity: 1;
+  animation: ai-spin 0.7s linear infinite;
+}
+
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-intel-hint {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  color: var(--text-dim);
+  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.ai-intel-bar:focus-within .ai-intel-hint {
+  opacity: 0.7;
+}
+
+/* Result overlay: slides in below the input */
+.ai-intel-result {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  padding: 0 12px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.2, 0, 0, 1), padding 0.25s;
+}
+
+.ai-intel-result.visible {
+  max-height: 120px;
+  padding: 6px 12px 8px;
+  border-top: 1px solid rgba(0, 201, 177, 0.12);
+  color: var(--text);
+}
+
+.ai-intel-result.visible::before {
+  content: '▸ ';
+  color: var(--accent);
+  font-size: 10px;
+}
+
+/* ============================================================
+   Cinematic depth: map edge vignette + panel scan-lines
+   ============================================================ */
+
+/* ── Map container: soft vignette at edges ── */
+.map-container {
+  position: relative;
+}
+
+.map-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,
+      transparent 55%,
+      rgba(3, 6, 9, 0.18) 80%,
+      rgba(3, 6, 9, 0.45) 100%
+    );
+}
+
+/* ── Panel: ultra-subtle scan-lines for instrument feel ── */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.008) 3px,
+    rgba(255, 255, 255, 0.008) 4px
+  );
+  opacity: 1;
+}

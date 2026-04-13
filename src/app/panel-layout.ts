@@ -479,6 +479,7 @@ export class PanelLayoutManager implements AppModule {
               </button>
             </div>
           </div>
+          <div id="aiIntelBarMount"></div>
           <div class="map-container" id="mapContainer"></div>
           ${SITE_VARIANT === 'happy' ? '<button class="tv-exit-btn" id="tvExitBtn">Exit TV Mode</button>' : ''}
           <div class="map-resize-handle" id="mapResizeHandle"></div>
@@ -506,10 +507,19 @@ export class PanelLayoutManager implements AppModule {
     `;
 
     this.createPanels();
+    this.mountAiIntelBar();
 
     if (this.ctx.isMobile) {
       this.setupMobileMapToggle();
     }
+  }
+
+  private mountAiIntelBar(): void {
+    const mount = document.getElementById('aiIntelBarMount');
+    if (!mount) return;
+    import('../components/AiIntelBar').then(({ AiIntelBar }) => {
+      new AiIntelBar(mount);
+    }).catch(() => { /* non-fatal */ });
   }
 
   private setupMobileMapToggle(): void {

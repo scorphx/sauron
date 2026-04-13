@@ -1,0 +1,83 @@
+project: sauron-3d-ai-cinematic
+rev: 1
+goal: |
+  Cinematic 3D-first global intelligence platform.
+  AI natural language → map actions. Teal atmosphere globe.
+  Map IS the world, panels are instruments.
+
+phases:
+
+  A_globe_3d:
+    priority: P0
+    impact: immediate visual transformation
+    files:
+      src/components/GlobeMap.ts:
+        - line 620: atmosphereColor '#4466cc' → '#00c9b1'  # teal accent
+        - line 621: atmosphereAltitude 0.18 → 0.25          # bigger halo
+        - post-initGlobe: addEventListener 'ai-intel-actions'
+          actions:
+            zoom:   globe.pointOfView({ lat, lng, altitude }, 1200)
+            layer_on/off: dispatch 'sauron-layer-toggle' CustomEvent
+
+  B_ai_intel_endpoint:
+    priority: P0
+    impact: new AI capability
+    new_files:
+      src/generated/server/worldmonitor/ai-intel/v1/service_server.ts:
+        types: [AskIntelRequest, AskIntelResponse, IntelAction, AiIntelServiceHandler]
+        route: GET /api/ai-intel/v1/ask-intel
+        onError: (error, req) => Response | Promise<Response>   # matches gateway
+      server/worldmonitor/ai-intel/v1/ask-intel.ts:
+        llm: callLlmTool (groq fast)
+        system_prompt: geopolitical analyst, return JSON {summary, actions[]}
+        actions_schema: [zoom{lat,lng,altitude}, layer_on{layer}, layer_off{layer}]
+        validate: JSON.parse + typeof summary === string
+        maxTokens: 400
+        temperature: 0.2
+      server/worldmonitor/ai-intel/v1/handler.ts:
+        impl: AiIntelServiceHandler → ask-intel.ts
+      api/ai-intel/v1/[rpc].ts:
+        runtime: edge
+        pattern: createDomainGateway(createAiIntelServiceRoutes(aiIntelHandler, serverOptions))
+    modify:
+      server/gateway.ts:
+        RPC_CACHE_TIER: add '/api/ai-intel/v1/ask-intel': 'no-store'
+
+  C_ai_intel_bar:
+    priority: P0
+    impact: visible interactive feature
+    new_files:
+      src/components/AiIntelBar.ts:
+        mount: into #aiIntelBarMount div (below map panel-header)
+        elements: [icon, input[placeholder="Ask the globe…"], spinner, result-overlay]
+        flow:
+          - Enter key → fetch /api/ai-intel/v1/ask-intel?query=…&region=…
+          - loading spinner → .ai-intel-bar.loading class
+          - result → show result overlay for 12s, dispatch ai-intel-actions event
+          - Escape → clear result
+        events_out: CustomEvent('ai-intel-actions', {detail: actions[]})
+    modify:
+      src/app/panel-layout.ts:
+        - insert <div id="aiIntelBarMount"></div> after panel-header in map-section
+        - after createPanels(): mount AiIntelBar(document.getElementById('aiIntelBarMount'))
+      src/styles/signal-theme.css:
+        .ai-intel-bar:         glass row below map header, hidden border-top
+        .ai-intel-input-wrap:  flex, gap 8px, align center
+        .ai-intel-icon:        text-dim color
+        .ai-intel-input:       flex-1, glass bg, no border except focus (teal)
+        .ai-intel-spinner:     12px teal border-top spin, hidden unless .loading
+        .ai-intel-result:      absolute overlay bottom-left of map, glass card,
+                               0-height → auto on .visible, fade transition
+
+  D_cinematic_css:
+    priority: P1
+    impact: atmosphere depth
+    modify:
+      src/styles/signal-theme.css:
+        - map vignette: .map-container::after pseudo, radial gradient edges
+        - globe auto-rotate enabled by default (already in GlobeMap.ts)
+        - panel row scan-line: .panel::before repeating-linear-gradient
+          (very subtle, 2px pitch, rgba 0.015)
+
+execution_order: [A, B, C, D]
+thread: single-pass, all commits squashed into one

@@ -617,8 +617,8 @@ export class GlobeMap {
     globe
       .globeImageUrl(GLOBE_TEXTURE_URLS[initialTexture])
       .backgroundImageUrl('')
-      .atmosphereColor('#4466cc')
-      .atmosphereAltitude(0.18)
+      .atmosphereColor('#00c9b1')
+      .atmosphereAltitude(0.25)
       .width(initW)
       .height(initH)
       .pathTransitionDuration(0);
@@ -876,6 +876,29 @@ export class GlobeMap {
 
     this.globe = globe;
     this.initialized = true;
+
+    // AI intel actions — zoom + layer control via CustomEvent
+    const aiActionHandler = (e: Event) => {
+      const actions = (e as CustomEvent<Array<{ type: string; payload: Record<string, unknown> }>
+      >).detail;
+      if (!Array.isArray(actions)) return;
+      for (const action of actions) {
+        if (action.type === 'zoom' && action.payload) {
+          const { lat, lng, altitude } = action.payload as { lat?: number; lng?: number; altitude?: number };
+          if (typeof lat === 'number' && typeof lng === 'number') {
+            globe.pointOfView({ lat, lng, altitude: altitude ?? 1.2 }, 1400);
+          }
+        }
+        if ((action.type === 'layer_on' || action.type === 'layer_off') && action.payload?.layer) {
+          window.dispatchEvent(new CustomEvent('sauron-layer-toggle', {
+            detail: { layer: action.payload.layer, enabled: action.type === 'layer_on' },
+          }));
+        }
+      }
+    };
+    window.addEventListener('ai-intel-actions', aiActionHandler);
+    // Store for cleanup
+    (this as unknown as Record<string, unknown>)._aiActionHandler = aiActionHandler;
 
     // Apply initial render quality + performance profile
     this.applyRenderQuality(initialScale);
