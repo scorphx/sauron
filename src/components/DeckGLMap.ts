@@ -549,7 +549,6 @@ export class DeckGLMap {
     this.maplibreMap?.on('load', () => {
       localizeMapLabels(this.maplibreMap);
       // Globe atmosphere — void space background with teal horizon glow
-      // @ts-expect-error -- setFog is valid in MapLibre v5 but missing from shipped types
       (this.maplibreMap as any)?.setFog({
         color: 'rgba(2, 8, 20, 0.9)',
         'high-color': '#000814',
@@ -768,7 +767,6 @@ export class DeckGLMap {
       });
       this.maplibreMap.on('load', () => {
         localizeMapLabels(this.maplibreMap);
-        // @ts-expect-error -- setFog is valid in MapLibre v5 but missing from shipped types
         (this.maplibreMap as any)?.setFog({
           color: 'rgba(2, 8, 20, 0.9)',
           'high-color': '#000814',
