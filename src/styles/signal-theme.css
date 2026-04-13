@@ -1,0 +1,245 @@
+/* ============================================================
+   Signal Theme — Arc / Apple design language for World Monitor
+   Unlayered — wins over @layer base (main.css) automatically.
+   happy-theme.css is imported after this in main.ts and wins
+   for [data-variant="happy"] selectors.
+   ============================================================ */
+
+/* ── Antialiasing + text rendering ── */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Panel: glass surface + rounded corners + entrance animation ── */
+.panel {
+  border-radius: var(--radius-md);
+  border-color: var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+  animation: signal-panel-enter 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.986); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Panel header: subtle gradient + more padding ── */
+.panel-header {
+  padding: 10px 14px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border-bottom-color: var(--glass-border);
+}
+
+/* ── Panel title: Inter, proper case, not shouting uppercase mono ── */
+.panel-title {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+}
+
+/* ── Live panel: teal accent pulse on header border ── */
+.panel.has-new .panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 201, 177, 0.07) 0%,
+    rgba(0, 201, 177, 0.02) 100%
+  );
+  border-bottom-color: rgba(0, 201, 177, 0.22);
+}
+
+/* ── Panel count badge: mono + refined shape ── */
+.panel-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+}
+
+/* ── Tabs: Inter + rounder pill ── */
+.panel-tab {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  border-radius: 6px 6px 0 0;
+}
+
+.panel-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
+.panel-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Resize handle: teal instead of hardcoded blue ── */
+.panel-resize-handle {
+  background: linear-gradient(to top, rgba(0, 201, 177, 0.08), transparent);
+}
+
+.panel-resize-handle:hover,
+.panel-resize-handle.active {
+  background: linear-gradient(to top, rgba(0, 201, 177, 0.28), transparent);
+}
+
+/* ── Thin scrollbars everywhere ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* ── Buttons + inputs: Inter ── */
+button,
+input,
+select,
+textarea,
+.btn {
+  font-family: var(--font-ui);
+}
+
+/* ── Header bar: glass — target common header class names ── */
+.main-header,
+#wm-header,
+.app-header,
+[class*="header-bar"],
+[class*="topbar"] {
+  background: rgba(7, 13, 26, 0.88);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom-color: var(--glass-border);
+}
+
+/* ── Map section: panel header goes full-width flush, no top radius ── */
+.map-section .panel-header {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* ── Selection color: teal ── */
+::selection {
+  background: rgba(0, 201, 177, 0.22);
+  color: var(--text);
+}
+
+/* ── Focus ring: teal ── */
+:focus-visible {
+  outline: 2px solid rgba(0, 201, 177, 0.55);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Link color ── */
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  color: color-mix(in srgb, var(--accent) 75%, white);
+}
+
+/* ── Panel loading / empty states ── */
+.panel-loading,
+.panel-empty {
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+/* ── Panel content inner padding: breathe ── */
+.panel-content {
+  padding: 10px 12px;
+}
+
+/* ── Panel grid gap ── */
+.panels-grid,
+.panel-grid {
+  gap: 8px;
+  padding: 8px;
+}
+
+/* ── Tooltip / popover: glass ── */
+[class*="tooltip"],
+[class*="popover"] {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow-lg);
+  font-family: var(--font-ui);
+}
+
+/* ── Status dot pulse: teal glow ── */
+.status-dot[class*="live"],
+.dot-live,
+[class*="status-live"] {
+  box-shadow: 0 0 0 0 rgba(0, 201, 177, 0.5);
+  animation: signal-status-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes signal-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 201, 177, 0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(0, 201, 177, 0); }
+}
+
+/* ── Table/list rows ── */
+tr:hover td,
+[class*="row"]:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ── Input fields ── */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+select {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 13px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus {
+  border-color: rgba(0, 201, 177, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 201, 177, 0.1);
+  outline: none;
+}
+
+/* ── Pill / badge base ── */
+[class*="badge"],
+[class*="pill"],
+[class*="tag"] {
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+}
