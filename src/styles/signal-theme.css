@@ -458,6 +458,158 @@ input[class*="search"] {
 }
 
 /* ============================================================
+   Phase 4 — Cinematic 3D-first experience
+   Map is the world. Panels are instruments, not boxes.
+   ============================================================ */
+
+/* ── Deeper void background ── */
+body {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, #071428 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 100% 100%, #060f1f 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 0% 80%, #050b16 0%, transparent 45%),
+    #030609;
+}
+
+/* ── Header: slimmer + fully glass ── */
+.header {
+  height: 44px;
+  background: rgba(3, 6, 9, 0.75);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ── Logo: strong editorial identity ── */
+.logo,
+.logo-mobile {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  opacity: 0.95;
+}
+
+/* ── Map: cinematic hero — wider on big screens ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) {
+    grid-template-columns: var(--map-col-width, 68%) 4px 1fr;
+  }
+}
+
+@media (min-width: 1600px) {
+  .main-content:not(.map-hidden) {
+    grid-template-columns: var(--map-col-width, 72%) 4px 1fr;
+  }
+}
+
+/* ── Map section: no hard edges, it IS the environment ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .map-section {
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+  }
+}
+
+/* ── Width divider: near-invisible, becomes teal on hover ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .map-width-resize-handle {
+    background: rgba(255, 255, 255, 0.03);
+    width: 4px;
+  }
+
+  .main-content:not(.map-hidden) .map-width-resize-handle:hover,
+  .main-content:not(.map-hidden) .map-width-resize-handle.active {
+    background: rgba(0, 201, 177, 0.5);
+  }
+}
+
+/* ── Panels column: tighter gap, panels breathe inside ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .panels-grid {
+    padding: 8px 10px;
+    gap: 8px;
+    background: rgba(3, 6, 9, 0.4);
+  }
+}
+
+/* ── Panel: deeper glass + heavier shadow for depth ── */
+.panel {
+  background: rgba(6, 10, 20, 0.82) !important;
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
+}
+
+/* ── Panel header: deeper contrast ── */
+.panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  ) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ── Panel count badge: subtle ── */
+.panel-count {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: var(--text-dim);
+}
+
+/* ── Map panel header: fully transparent — map shows through ── */
+.map-section .panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(3, 6, 9, 0.78) 0%,
+    rgba(3, 6, 9, 0.45) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ── Footer: near invisible ── */
+.site-footer {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.03) !important;
+  padding: 10px 20px;
+}
+
+.site-footer-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.site-footer-sub,
+.site-footer-copy {
+  color: var(--text-dim);
+  opacity: 0.4;
+  font-size: 10px;
+}
+
+/* ── Layer toggles: shifted to top-left for better ergonomics ── */
+.deckgl-layer-toggles {
+  top: 10px;
+  bottom: auto !important;
+  left: 10px;
+}
+
+/* ── Panel entrance: spring feel ── */
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.990); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================================
    Phase 3 — Split view: map left · panels right (≥1100px)
    Mirrors the Tauri desktop-grid layout for the web.
    ============================================================ */
