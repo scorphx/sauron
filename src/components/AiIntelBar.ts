@@ -17,7 +17,6 @@ interface IntelResult {
 export class AiIntelBar {
   private el: HTMLElement;
   private input: HTMLInputElement;
-  private _spinner: HTMLElement;
   private result: HTMLElement;
   private loading = false;
   private dismissTimer: ReturnType<typeof setTimeout> | null = null;
@@ -45,7 +44,6 @@ export class AiIntelBar {
     `;
 
     this.input = this.el.querySelector<HTMLInputElement>('.ai-intel-input')!;
-    this._spinner = this.el.querySelector<HTMLElement>('.ai-intel-spinner')!;
     this.result = this.el.querySelector<HTMLElement>('.ai-intel-result')!;
 
     this.input.addEventListener('keydown', (e) => {
