@@ -1433,3 +1433,181 @@ button {
 
 /* (old amber/terminal overrides removed — parchment theme above is canonical) */
 
+/* ============================================================
+   GLOBE-FIRST IMMERSIVE LAYOUT
+   Globe fills 100% of the viewport. Panels float over it as
+   a semi-transparent right-side drawer. No rigid split panes.
+   ============================================================ */
+
+/* ── main-content: position context for absolute children ── */
+.main-content {
+  position: relative !important;
+  display: block !important;
+  flex: 1 1 0 !important;
+  overflow: hidden !important;
+  /* Kill the 1600px grid split */
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+  background: transparent !important;
+}
+
+/* ── Map section: covers the entire content area ── */
+.map-section {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  display: block !important;
+  z-index: 0 !important;
+}
+
+/* ── Map canvas: fill the entire section (behind all overlays) ── */
+.map-section .map-container,
+.map-container.deckgl-mode,
+#mapContainer {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  flex: none !important;
+  border-radius: 0 !important;
+}
+
+/* ── Map header: translucent floating bar top-left ── */
+.map-section .panel-header,
+.main-content:not(.map-hidden) .map-section .panel-header {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 340px !important;
+  z-index: 20 !important;
+  height: 38px !important;
+  background: rgba(15, 12, 8, 0.62) !important;
+  backdrop-filter: blur(18px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+  border-bottom: 1px solid rgba(200, 82, 0, 0.18) !important;
+  border-radius: 0 !important;
+}
+
+/* ── AI intel bar: float just below map header ── */
+#aiIntelBarMount {
+  position: absolute !important;
+  top: 38px !important;
+  left: 0 !important;
+  right: 340px !important;
+  z-index: 20 !important;
+}
+
+/* ── Map bottom panels (if any): anchor at the bottom of the globe ── */
+.map-bottom-grid {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 340px !important;
+  z-index: 15 !important;
+  background: transparent !important;
+  border-top: none !important;
+}
+
+/* ── Panels grid: floating glass drawer on the right ── */
+.panels-grid {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 340px !important;
+  min-width: 0 !important;
+  max-width: 340px !important;
+  z-index: 10 !important;
+  /* Subtle frosted glass tint — panels are already white */
+  background: rgba(240, 235, 225, 0.18) !important;
+  backdrop-filter: blur(3px) !important;
+  -webkit-backdrop-filter: blur(3px) !important;
+  border-left: 1px solid rgba(200, 82, 0, 0.1) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+/* ── Panels inside the drawer: opaque glass cards ── */
+.panels-grid .panel {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.5) !important;
+  box-shadow:
+    0 2px 12px rgba(60, 40, 20, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset !important;
+}
+
+/* ── MapLibre controls: keep left of the panels ── */
+.maplibregl-ctrl-top-right {
+  right: 348px !important;
+}
+.maplibregl-ctrl-bottom-right {
+  right: 348px !important;
+}
+
+/* ── Layer toggles: already float, just boost z-index ── */
+.deckgl-layer-toggles,
+.layer-toggles {
+  z-index: 30 !important;
+}
+
+/* ── Kill both resize handles ── */
+.map-resize-handle,
+.map-width-resize-handle {
+  display: none !important;
+}
+
+/* ── Footer: hidden — globe is full screen ── */
+.site-footer {
+  display: none !important;
+}
+
+/* ── Mobile: on small screens panels go below the globe ── */
+@media (max-width: 900px) {
+  .main-content {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .map-section {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 60dvh !important;
+    flex-shrink: 0 !important;
+  }
+  .panels-grid {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(200, 82, 0, 0.1) !important;
+    backdrop-filter: none !important;
+    background: #f0ebe1 !important;
+    overflow-y: auto !important;
+  }
+  .map-section .panel-header {
+    right: 0 !important;
+  }
+  #aiIntelBarMount {
+    right: 0 !important;
+  }
+  .map-bottom-grid {
+    right: 0 !important;
+  }
+  .maplibregl-ctrl-top-right,
+  .maplibregl-ctrl-bottom-right {
+    right: 0 !important;
+  }
+}
+
