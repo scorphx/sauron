@@ -548,6 +548,14 @@ export class DeckGLMap {
 
     this.maplibreMap?.on('load', () => {
       localizeMapLabels(this.maplibreMap);
+      // Globe atmosphere — void space background with teal horizon glow
+      this.maplibreMap?.setFog({
+        color: 'rgba(2, 8, 20, 0.9)',
+        'high-color': '#000814',
+        'horizon-blend': 0.06,
+        'space-color': '#000000',
+        'star-intensity': 0.25,
+      } as maplibregl.FogSpecification);
       this.initDeck();
       this.loadCountryBoundaries();
       this.fetchServerBases();
@@ -707,6 +715,10 @@ export class DeckGLMap {
       style: primaryStyle,
       center: [preset.longitude, preset.latitude],
       zoom: preset.zoom,
+      pitch: 50,
+      bearing: -10,
+      // @ts-expect-error -- MapLibre v5 globe projection (valid MapOptions key)
+      projection: { type: 'globe' },
       renderWorldCopies: false,
       attributionControl: false,
       interactive: true,
@@ -736,6 +748,10 @@ export class DeckGLMap {
         style: fallback,
         center: [preset.longitude, preset.latitude],
         zoom: preset.zoom,
+        pitch: 50,
+        bearing: -10,
+        // @ts-expect-error -- MapLibre v5 globe projection (valid MapOptions key)
+      projection: { type: 'globe' },
         renderWorldCopies: false,
         attributionControl: false,
         interactive: true,
@@ -751,6 +767,14 @@ export class DeckGLMap {
       });
       this.maplibreMap.on('load', () => {
         localizeMapLabels(this.maplibreMap);
+        this.maplibreMap?.setFog({
+          color: 'rgba(2, 8, 20, 0.9)',
+          'high-color': '#000814',
+          'horizon-blend': 0.06,
+          'space-color': '#000000',
+          'star-intensity': 0.25,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
         this.initDeck();
         this.loadCountryBoundaries();
         this.fetchServerBases();
@@ -4292,11 +4316,6 @@ export class DeckGLMap {
       </div>
     `;
 
-    const authorBadge = document.createElement('div');
-    authorBadge.className = 'map-author-badge';
-    authorBadge.textContent = '© Elie Habib · Someone™';
-    toggles.appendChild(authorBadge);
-
     this.container.appendChild(toggles);
 
     // Bind toggle events
@@ -4720,7 +4739,8 @@ export class DeckGLMap {
       this.maplibreMap.flyTo({
         center: [preset.longitude, preset.latitude],
         zoom: this.state.zoom,
-        duration: 1000,
+        pitch: this.maplibreMap.getPitch() || 50,
+        duration: 1400,
       });
     }
 

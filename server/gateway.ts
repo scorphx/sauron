@@ -82,6 +82,9 @@ const RPC_CACHE_TIER: Record<string, CacheTier> = {
   '/api/unrest/v1/list-unrest-events': 'slow',
   '/api/cyber/v1/list-cyber-threats': 'slow',
 
+  // AI intel query — always dynamic
+  '/api/ai-intel/v1/ask-intel': 'no-store',
+
   // New domains (sauron manifest phase 2)
   '/api/ransomware/v1/list-ransomware-victims': 'slow',
   '/api/breach/v1/list-breaches': 'daily',

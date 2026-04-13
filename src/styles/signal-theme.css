@@ -456,3 +456,1485 @@ input[class*="search"] {
 @media (prefers-reduced-motion: reduce) {
   .panel { animation: none !important; }
 }
+
+/* ============================================================
+   Phase 4 — Cinematic 3D-first experience
+   Map is the world. Panels are instruments, not boxes.
+   ============================================================ */
+
+/* ── Deeper void background ── */
+body {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, #071428 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 100% 100%, #060f1f 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 0% 80%, #050b16 0%, transparent 45%),
+    #030609;
+}
+
+/* ── Header: slimmer + fully glass ── */
+.header {
+  height: 44px;
+  background: rgba(3, 6, 9, 0.75);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ── Logo: strong editorial identity ── */
+.logo,
+.logo-mobile {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  opacity: 0.95;
+}
+
+/* ── Map: cinematic hero — wider on big screens ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) {
+    grid-template-columns: var(--map-col-width, 68%) 4px 1fr;
+  }
+}
+
+@media (min-width: 1600px) {
+  .main-content:not(.map-hidden) {
+    grid-template-columns: var(--map-col-width, 72%) 4px 1fr;
+  }
+}
+
+/* ── Map section: no hard edges, it IS the environment ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .map-section {
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+  }
+}
+
+/* ── Width divider: near-invisible, becomes teal on hover ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .map-width-resize-handle {
+    background: rgba(255, 255, 255, 0.03);
+    width: 4px;
+  }
+
+  .main-content:not(.map-hidden) .map-width-resize-handle:hover,
+  .main-content:not(.map-hidden) .map-width-resize-handle.active {
+    background: rgba(0, 201, 177, 0.5);
+  }
+}
+
+/* ── Panels column: tighter gap, panels breathe inside ── */
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .panels-grid {
+    padding: 8px 10px;
+    gap: 8px;
+    background: rgba(3, 6, 9, 0.4);
+  }
+}
+
+/* ── Panel: deeper glass + heavier shadow for depth ── */
+.panel {
+  background: rgba(6, 10, 20, 0.82) !important;
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
+}
+
+/* ── Panel header: deeper contrast ── */
+.panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  ) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ── Panel count badge: subtle ── */
+.panel-count {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: var(--text-dim);
+}
+
+/* ── Map panel header: fully transparent — map shows through ── */
+.map-section .panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(3, 6, 9, 0.78) 0%,
+    rgba(3, 6, 9, 0.45) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ── Footer: near invisible ── */
+.site-footer {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.03) !important;
+  padding: 10px 20px;
+}
+
+.site-footer-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.site-footer-sub,
+.site-footer-copy {
+  color: var(--text-dim);
+  opacity: 0.4;
+  font-size: 10px;
+}
+
+/* ── Layer toggles: shifted to top-left for better ergonomics ── */
+.deckgl-layer-toggles {
+  top: 10px;
+  bottom: auto !important;
+  left: 10px;
+}
+
+/* ── Panel entrance: spring feel ── */
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.990); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================================
+   Phase 3 — Split view: map left · panels right (≥1100px)
+   Mirrors the Tauri desktop-grid layout for the web.
+   ============================================================ */
+
+@media (min-width: 1100px) {
+  /* ── Root: side-by-side grid ── */
+  .main-content:not(.map-hidden) {
+    display: grid;
+    grid-template-columns: var(--map-col-width, 62%) 5px 1fr;
+    grid-template-rows: 1fr;
+    overflow: hidden; /* children manage their own scroll */
+  }
+
+  /* ── Map: full height of the content area ── */
+  .main-content:not(.map-hidden) .map-section {
+    grid-column: 1;
+    grid-row: 1;
+    height: 100% !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+    border: none;
+    border-right: 1px solid var(--glass-border);
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  /* ── Width drag handle: thin teal separator ── */
+  .main-content:not(.map-hidden) .map-width-resize-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-column: 2;
+    grid-row: 1;
+    width: 5px;
+    cursor: ew-resize;
+    background: var(--glass-border);
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .main-content:not(.map-hidden) .map-width-resize-handle:hover,
+  .main-content:not(.map-hidden) .map-width-resize-handle.active {
+    background: rgba(0, 201, 177, 0.35);
+  }
+
+  /* ── ns-resize handle: not needed in split view ── */
+  .main-content:not(.map-hidden) .map-resize-handle {
+    display: none;
+  }
+
+  /* ── Panels column: vertical scroll on the right ── */
+  .main-content:not(.map-hidden) .panels-grid {
+    grid-column: 3;
+    grid-row: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-auto-rows: minmax(240px, auto);
+    align-content: start;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  /* ── Map header: flush corners in split view ── */
+  .main-content:not(.map-hidden) .map-section .panel-header {
+    border-radius: 0;
+  }
+
+  /* ── Map header: no top border radius on map in split view ── */
+  .main-content:not(.map-hidden) .map-section {
+    border-top: none;
+  }
+}
+
+/* ── When map is hidden on wide screens: restore single column ── */
+@media (min-width: 1100px) {
+  .main-content.map-hidden {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* ── Layer toggles: glass card instead of opaque dark box ── */
+.deckgl-layer-toggles {
+  background: rgba(7, 13, 26, 0.82) !important;
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.deckgl-layer-toggles .toggle-header {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom-color: var(--glass-border) !important;
+  padding: 8px 10px;
+}
+
+.deckgl-layer-toggles .layer-search {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.deckgl-layer-toggles .layer-search:focus {
+  border-color: rgba(0, 201, 177, 0.4) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── Stagger entrance on panels-grid in split view ── */
+@media (min-width: 1100px) {
+  .panels-grid .panel {
+    animation: signal-panel-enter 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+}
+
+/* ============================================================
+   AI Intel Bar — glass query input below map header
+   ============================================================ */
+
+#aiIntelBarMount {
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.ai-intel-bar {
+  display: flex;
+  flex-direction: column;
+  background: rgba(3, 6, 9, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0;
+}
+
+.ai-intel-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+}
+
+.ai-intel-icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: color 0.2s, opacity 0.2s;
+}
+
+.ai-intel-bar:focus-within .ai-intel-icon {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.ai-intel-input {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text);
+  caret-color: var(--accent);
+  letter-spacing: 0;
+  min-width: 0;
+}
+
+.ai-intel-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* Spinner: 12px ring, hidden by default */
+.ai-intel-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid rgba(0, 201, 177, 0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ai-intel-bar.loading .ai-intel-spinner {
+  opacity: 1;
+  animation: ai-spin 0.7s linear infinite;
+}
+
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-intel-hint {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  color: var(--text-dim);
+  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.ai-intel-bar:focus-within .ai-intel-hint {
+  opacity: 0.7;
+}
+
+/* Result overlay: slides in below the input */
+.ai-intel-result {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  padding: 0 12px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.2, 0, 0, 1), padding 0.25s;
+}
+
+.ai-intel-result.visible {
+  max-height: 120px;
+  padding: 6px 12px 8px;
+  border-top: 1px solid rgba(0, 201, 177, 0.12);
+  color: var(--text);
+}
+
+.ai-intel-result.visible::before {
+  content: '▸ ';
+  color: var(--accent);
+  font-size: 10px;
+}
+
+/* ============================================================
+   Cinematic depth: map edge vignette + panel scan-lines
+   ============================================================ */
+
+/* ── Map container: soft vignette at edges ── */
+.map-container {
+  position: relative;
+}
+
+.map-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,
+      transparent 55%,
+      rgba(3, 6, 9, 0.18) 80%,
+      rgba(3, 6, 9, 0.45) 100%
+    );
+}
+
+/* ── Panel: ultra-subtle scan-lines for instrument feel ── */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.008) 3px,
+    rgba(255, 255, 255, 0.008) 4px
+  );
+  opacity: 1;
+}
+
+/* ============================================================
+   Phase 5 — SAURON Monokai: warm charcoal + soft amber glow
+   Inspired by Monokai. Readable. Rounded. Inviting.
+   ============================================================ */
+
+/* ── Monokai-inspired root variables ── */
+:root {
+  /* Monokai warm charcoal palette */
+  --bg:            #272822;
+  --bg-secondary:  #1e1f1a;
+  --bg-panel:      #2d2e27;
+  --bg-panel-alt:  #33342c;
+
+  /* Accent: Monokai orange (warm, readable) */
+  --accent:        #fd971f;
+  --accent-dim:    rgba(253, 151, 31, 0.14);
+  --accent-green:  #a6e22e;
+  --accent-blue:   #66d9ef;
+  --accent-pink:   #f92672;
+
+  /* Text: Monokai off-white scale */
+  --text:           #f8f8f2;
+  --text-secondary: #b0ae9d;
+  --text-dim:       #75715e;
+  --text-muted:     #58564d;
+
+  /* Glass / surface */
+  --glass-bg:     rgba(45, 46, 39, 0.92);
+  --glass-border: rgba(253, 151, 31, 0.16);
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.45),
+                  0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --glass-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55),
+                     0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  /* Radii: soft and rounded */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Fonts: Inter for UI, mono for data */
+  --font-ui:      'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-display: 'Inter', system-ui, sans-serif;
+
+  --scrollbar-thumb:       rgba(253, 151, 31, 0.2);
+  --scrollbar-thumb-hover: rgba(253, 151, 31, 0.38);
+}
+
+/* ── Body: Monokai warm charcoal ── */
+body {
+  background: #1e1f1a !important;
+  font-family: var(--font-ui) !important;
+  color: var(--text) !important;
+}
+
+/* ── Subtle radial warmth in bg ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 30% 0%, rgba(253, 151, 31, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(166, 226, 46, 0.03) 0%, transparent 50%),
+    #1e1f1a;
+}
+
+/* ── Kill the CRT body scanlines ── */
+body::after {
+  display: none !important;
+}
+
+/* ── Header: warm charcoal bar ── */
+.header {
+  height: 46px !important;
+  background: rgba(30, 31, 26, 0.96) !important;
+  backdrop-filter: blur(20px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.18) !important;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+.header,
+.header * {
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Logo: Inter, warm, not italic ── */
+.logo,
+.logo-mobile {
+  font-family: var(--font-ui) !important;
+  font-style: normal !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #fd971f !important;
+  opacity: 1 !important;
+}
+
+/* ── Status dot: green live pulse ── */
+.status-dot,
+[class*="dot-live"],
+[class*="status-live"] {
+  background: #a6e22e !important;
+  box-shadow: 0 0 0 0 rgba(166, 226, 46, 0.5) !important;
+}
+
+@keyframes signal-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(166, 226, 46, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(166, 226, 46, 0); }
+}
+
+/* ── Header clock: Inter tabular ── */
+.header-clock {
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.03em !important;
+  color: rgba(253, 151, 31, 0.65) !important;
+}
+
+/* ── Search / region buttons ── */
+.search-btn,
+.focus-select,
+select {
+  font-family: var(--font-ui) !important;
+  background: rgba(39, 40, 34, 0.9) !important;
+  border: 1px solid rgba(253, 151, 31, 0.2) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  transition: border-color 0.15s, color 0.15s !important;
+}
+
+.search-btn:hover {
+  border-color: rgba(253, 151, 31, 0.45) !important;
+  color: #fd971f !important;
+}
+
+/* ── Panel: warm glass card ── */
+.panel {
+  background: rgba(45, 46, 39, 0.94) !important;
+  backdrop-filter: blur(18px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.3) !important;
+  border: 1px solid rgba(253, 151, 31, 0.12) !important;
+  border-left: 2px solid rgba(253, 151, 31, 0.35) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
+}
+
+/* ── Panel header: subtle warm gradient ── */
+.panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(253, 151, 31, 0.05) 0%,
+    rgba(253, 151, 31, 0.02) 100%
+  ) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.1) !important;
+  padding: 9px 12px !important;
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+
+/* ── Panel title: Inter, warm uppercase ── */
+.panel-title {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(253, 151, 31, 0.75) !important;
+  text-shadow: none !important;
+}
+
+/* ── Panel count badge ── */
+.panel-count {
+  background: rgba(253, 151, 31, 0.1) !important;
+  border: 1px solid rgba(253, 151, 31, 0.2) !important;
+  color: rgba(253, 151, 31, 0.7) !important;
+  border-radius: 4px !important;
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Panel content ── */
+.panel-content,
+.panel-body {
+  font-family: var(--font-ui) !important;
+  color: var(--text) !important;
+}
+
+/* ── Panel new-data accent ── */
+.panel.has-new .panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(166, 226, 46, 0.06) 0%,
+    rgba(166, 226, 46, 0.02) 100%
+  ) !important;
+  border-bottom-color: rgba(166, 226, 46, 0.2) !important;
+}
+
+/* ── Panel tabs ── */
+.panel-tab {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.panel-tab.active {
+  border-bottom-color: #fd971f !important;
+  color: #fd971f !important;
+}
+
+/* ── Panels grid background ── */
+.panels-grid {
+  background: rgba(24, 25, 20, 0.6) !important;
+}
+
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .panels-grid {
+    background: rgba(24, 25, 20, 0.7) !important;
+    border-left: 1px solid rgba(253, 151, 31, 0.08) !important;
+  }
+}
+
+/* ── Map section: warm edges ── */
+.map-section {
+  border-radius: var(--radius-md) !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* ── Map panel header ── */
+.map-section .panel-header,
+.main-content:not(.map-hidden) .map-section .panel-header {
+  background: rgba(30, 31, 26, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: 0 !important;
+}
+
+/* ── Map panel title ── */
+.map-section .panel-title {
+  color: rgba(253, 151, 31, 0.75) !important;
+}
+
+/* ── Width drag handle ── */
+.map-width-resize-handle {
+  background: rgba(253, 151, 31, 0.06) !important;
+}
+
+.map-width-resize-handle:hover,
+.map-width-resize-handle.active {
+  background: rgba(253, 151, 31, 0.32) !important;
+}
+
+/* ── Layer toggles: warm glass ── */
+.deckgl-layer-toggles,
+.layer-toggles {
+  background: rgba(39, 40, 34, 0.96) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(253, 151, 31, 0.16) !important;
+  border-left: 2px solid rgba(253, 151, 31, 0.4) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.deckgl-layer-toggles .toggle-header,
+.layer-toggles .toggle-header {
+  font-family: var(--font-ui) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: rgba(253, 151, 31, 0.65) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.1) !important;
+}
+
+.deckgl-layer-toggles .layer-search,
+.layer-toggles .layer-search {
+  font-family: var(--font-ui) !important;
+  background: rgba(30, 31, 26, 0.8) !important;
+  border: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-secondary) !important;
+}
+
+.deckgl-layer-toggles .layer-search:focus,
+.layer-toggles .layer-search:focus {
+  border-color: rgba(253, 151, 31, 0.45) !important;
+  box-shadow: 0 0 0 2px rgba(253, 151, 31, 0.08) !important;
+}
+
+.layer-toggle {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+}
+
+.layer-toggle:hover {
+  color: var(--text) !important;
+}
+
+/* ── Inputs: warm dark ── */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+select,
+textarea {
+  background: rgba(30, 31, 26, 0.85) !important;
+  border: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text) !important;
+  font-family: var(--font-ui) !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus {
+  border-color: rgba(253, 151, 31, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(253, 151, 31, 0.1) !important;
+  outline: none !important;
+}
+
+/* ── Selection + focus ── */
+::selection {
+  background: rgba(253, 151, 31, 0.25) !important;
+  color: var(--text) !important;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(253, 151, 31, 0.55) !important;
+  outline-offset: 2px !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Links ── */
+a {
+  color: #fd971f !important;
+}
+
+a:hover {
+  color: #ffb950 !important;
+}
+
+/* ── Scrollbar: warm orange ── */
+::-webkit-scrollbar-thumb {
+  background: rgba(253, 151, 31, 0.2) !important;
+  border-radius: 3px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(253, 151, 31, 0.38) !important;
+}
+
+/* ── AI Intel Bar ── */
+.ai-intel-bar {
+  background: rgba(30, 31, 26, 0.9) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(253, 151, 31, 0.18) !important;
+}
+
+.ai-intel-input {
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  color: var(--text) !important;
+  caret-color: #fd971f !important;
+}
+
+.ai-intel-input::placeholder {
+  color: rgba(253, 151, 31, 0.35) !important;
+  font-style: italic !important;
+}
+
+.ai-intel-icon {
+  color: rgba(253, 151, 31, 0.5) !important;
+  opacity: 1 !important;
+}
+
+.ai-intel-bar:focus-within .ai-intel-icon {
+  color: #fd971f !important;
+}
+
+.ai-intel-result.visible {
+  border-top: 1px solid rgba(253, 151, 31, 0.15) !important;
+  color: var(--text-secondary) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+}
+
+.ai-intel-result.visible::before {
+  color: #fd971f !important;
+}
+
+.ai-intel-spinner {
+  border: 1.5px solid rgba(253, 151, 31, 0.18) !important;
+  border-top-color: #fd971f !important;
+}
+
+.ai-intel-hint {
+  background: rgba(253, 151, 31, 0.07) !important;
+  border: 1px solid rgba(253, 151, 31, 0.16) !important;
+  border-radius: var(--radius-sm) !important;
+  color: rgba(253, 151, 31, 0.5) !important;
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Map vignette: warm edges ── */
+.map-container::after {
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,
+      transparent 55%,
+      rgba(24, 25, 20, 0.18) 80%,
+      rgba(24, 25, 20, 0.42) 100%
+    ) !important;
+}
+
+/* ── Panel scan-lines: very subtle ── */
+.panel::before {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(253, 151, 31, 0.008) 3px,
+    rgba(253, 151, 31, 0.008) 4px
+  ) !important;
+}
+
+/* ── Site footer ── */
+.site-footer {
+  border-top: 1px solid rgba(253, 151, 31, 0.08) !important;
+  background: rgba(24, 25, 20, 0.9) !important;
+}
+
+.site-footer-name {
+  font-family: var(--font-ui) !important;
+  letter-spacing: 0.12em !important;
+  color: rgba(253, 151, 31, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+.site-footer-sub,
+.site-footer-copy {
+  font-family: var(--font-ui) !important;
+  color: rgba(117, 113, 94, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* ── 2D/3D toggle ── */
+.map-dimension-toggle {
+  border: 1px solid rgba(253, 151, 31, 0.2) !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden !important;
+}
+
+.map-dim-btn {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  border-radius: 0 !important;
+  color: rgba(253, 151, 31, 0.5) !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+
+.map-dim-btn.active {
+  background: rgba(253, 151, 31, 0.16) !important;
+  color: #fd971f !important;
+}
+
+.map-dim-btn:hover:not(.active) {
+  background: rgba(253, 151, 31, 0.08) !important;
+  color: rgba(253, 151, 31, 0.75) !important;
+}
+
+/* ── Buttons: rounded + warm ── */
+button {
+  font-family: var(--font-ui) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Tooltip ── */
+[class*="tooltip"],
+[class*="popover"] {
+  background: rgba(39, 40, 34, 0.98) !important;
+  border: 1px solid rgba(253, 151, 31, 0.18) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-ui) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ── cdp card elements: warm + readable ── */
+.cdp-card-title,
+[class*="cdp-card-title"] {
+  font-family: var(--font-ui) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(253, 151, 31, 0.6) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Mobile menu ── */
+.mobile-menu {
+  background: rgba(30, 31, 26, 0.98) !important;
+  border-right: 1px solid rgba(253, 151, 31, 0.14) !important;
+}
+
+.mobile-menu-title {
+  font-family: var(--font-ui) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  color: #fd971f !important;
+}
+
+/* ── Panel entrance: slide in from bottom like cards ── */
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Override root variables: amber accent, void black ── */
+:root {
+  --accent: #f0a000;
+  --accent-dim: rgba(240, 160, 0, 0.12);
+  --bg: #050505;
+  --bg-secondary: #0a0a0a;
+  --glass-bg: rgba(5, 5, 5, 0.97);
+  --glass-border: rgba(240, 160, 0, 0.14);
+  --glass-shadow: 0 0 0 1px rgba(240, 160, 0, 0.07),
+                  0 8px 40px rgba(0, 0, 0, 0.9);
+  --glass-shadow-lg: 0 0 0 1px rgba(240, 160, 0, 0.1),
+                     0 24px 60px rgba(0, 0, 0, 0.95);
+  --text: #b8cad6;
+  --text-secondary: #5c7080;
+  --text-dim: #354550;
+  --scrollbar-thumb: rgba(240, 160, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(240, 160, 0, 0.3);
+  --radius-md: 1px;
+  --radius-sm: 0px;
+  --radius-lg: 2px;
+}
+
+/* ── Body: pure void ── */
+body {
+  background: #000000 !important;
+  font-family: 'Courier New', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace !important;
+}
+
+/* ── Header: black command bar with amber rule ── */
+.header {
+  height: 38px !important;
+  background: #000000 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.28) !important;
+  box-shadow: 0 1px 0 rgba(240, 160, 0, 0.06) !important;
+}
+
+.header,
+.header-left,
+.header-center,
+.header-right,
+.header *,
+.header button,
+.header span,
+.header select,
+.header label {
+  font-family: 'Courier New', 'SF Mono', 'Fira Code', monospace !important;
+}
+
+/* ── Logo: amber monospace, uppercase, no italic ── */
+.logo,
+.logo-mobile {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-style: normal !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #f0a000 !important;
+  text-transform: uppercase !important;
+  opacity: 1 !important;
+}
+
+/* ── Header version badge: amber dim ── */
+.logo-version,
+[class*="version"] {
+  color: rgba(240, 160, 0, 0.45) !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Status dot: amber pulse ── */
+.status-dot,
+[class*="dot-live"],
+[class*="status-live"] {
+  background: #f0a000 !important;
+  box-shadow: 0 0 0 0 rgba(240, 160, 0, 0.5) !important;
+}
+
+@keyframes signal-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 160, 0, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(240, 160, 0, 0); }
+}
+
+/* ── Region selector / search btn: terminal style ── */
+.search-btn,
+.focus-select,
+select {
+  font-family: 'Courier New', monospace !important;
+  background: rgba(10, 10, 10, 0.95) !important;
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  color: #8a9ca6 !important;
+  font-size: 11px !important;
+}
+
+.search-btn:hover {
+  border-color: rgba(240, 160, 0, 0.45) !important;
+  color: #f0a000 !important;
+}
+
+/* ── Panel: hard-edged terminal window ── */
+.panel {
+  background: rgba(3, 3, 3, 0.98) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(240, 160, 0, 0.1) !important;
+  border-left: 2px solid rgba(240, 160, 0, 0.45) !important;
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 0 0 transparent,
+    0 4px 24px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* ── Panel header: amber tint bar ── */
+.panel-header {
+  background: rgba(240, 160, 0, 0.035) !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.1) !important;
+  padding: 7px 10px !important;
+}
+
+/* ── Panel title: amber mono uppercase ── */
+.panel-title {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.14em !important;
+  color: rgba(240, 160, 0, 0.65) !important;
+  text-shadow: 0 0 8px rgba(240, 160, 0, 0.3) !important;
+}
+
+/* ── Panel count badge: amber ── */
+.panel-count {
+  background: rgba(240, 160, 0, 0.08) !important;
+  border: 1px solid rgba(240, 160, 0, 0.18) !important;
+  color: rgba(240, 160, 0, 0.6) !important;
+  border-radius: 0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Panel content: mono feel ── */
+.panel-content,
+.panel-body {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+}
+
+/* ── Panel: new data → amber accent line ── */
+.panel.has-new .panel-header {
+  background: rgba(240, 160, 0, 0.06) !important;
+  border-bottom-color: rgba(240, 160, 0, 0.22) !important;
+}
+
+/* ── Panel tabs: terminal tab ── */
+.panel-tab {
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.panel-tab.active {
+  border-bottom-color: #f0a000 !important;
+  color: #f0a000 !important;
+}
+
+/* ── Panels grid background: pure black ── */
+.panels-grid {
+  background: #000000 !important;
+}
+
+@media (min-width: 1100px) {
+  .main-content:not(.map-hidden) .panels-grid {
+    background: #000000 !important;
+    border-left: 1px solid rgba(240, 160, 0, 0.1) !important;
+  }
+}
+
+/* ── Map section: zero border radius ── */
+.map-section {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Map panel header: dark with amber rule ── */
+.map-section .panel-header,
+.main-content:not(.map-hidden) .map-section .panel-header {
+  background: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.2) !important;
+}
+
+/* ── "Global Situation" title and clock: amber ── */
+.panel-title[class*="map"],
+.map-section .panel-title {
+  color: rgba(240, 160, 0, 0.7) !important;
+}
+
+/* ── Map header clock: amber mono ── */
+.header-clock {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(240, 160, 0, 0.55) !important;
+}
+
+/* ── Width drag handle: amber ── */
+.map-width-resize-handle {
+  background: rgba(240, 160, 0, 0.08) !important;
+}
+
+.map-width-resize-handle:hover,
+.map-width-resize-handle.active {
+  background: rgba(240, 160, 0, 0.4) !important;
+}
+
+/* ── Layer toggles: terminal panel ── */
+.deckgl-layer-toggles,
+.layer-toggles {
+  background: rgba(0, 0, 0, 0.97) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(240, 160, 0, 0.18) !important;
+  border-left: 2px solid rgba(240, 160, 0, 0.5) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+}
+
+.deckgl-layer-toggles .toggle-header,
+.layer-toggles .toggle-header {
+  font-family: 'Courier New', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: rgba(240, 160, 0, 0.6) !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.12) !important;
+}
+
+.deckgl-layer-toggles .layer-search,
+.layer-toggles .layer-search {
+  font-family: 'Courier New', monospace !important;
+  background: rgba(8, 8, 8, 0.98) !important;
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  color: #8a9ca6 !important;
+}
+
+.deckgl-layer-toggles .layer-search:focus,
+.layer-toggles .layer-search:focus {
+  border-color: rgba(240, 160, 0, 0.5) !important;
+  box-shadow: none !important;
+}
+
+.layer-toggle {
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ── Inputs globally: terminal look ── */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+select,
+textarea {
+  background: rgba(8, 8, 8, 0.98) !important;
+  border: 1px solid rgba(240, 160, 0, 0.18) !important;
+  border-radius: 0 !important;
+  color: #b8cad6 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus {
+  border-color: rgba(240, 160, 0, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(240, 160, 0, 0.06) !important;
+  outline: none !important;
+}
+
+/* ── Selection + focus ring: amber ── */
+::selection {
+  background: rgba(240, 160, 0, 0.22) !important;
+}
+
+:focus-visible {
+  outline: 1px solid rgba(240, 160, 0, 0.6) !important;
+  outline-offset: 1px !important;
+  border-radius: 0 !important;
+}
+
+/* ── Links: amber ── */
+a {
+  color: rgba(240, 160, 0, 0.8) !important;
+}
+
+a:hover {
+  color: #f0a000 !important;
+}
+
+/* ── Scrollbar: amber ── */
+::-webkit-scrollbar-thumb {
+  background: rgba(240, 160, 0, 0.18) !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(240, 160, 0, 0.35) !important;
+}
+
+/* ── AI Intel Bar: terminal feel ── */
+.ai-intel-bar {
+  background: rgba(0, 0, 0, 0.95) !important;
+  backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(240, 160, 0, 0.2) !important;
+}
+
+.ai-intel-input {
+  font-family: 'Courier New', 'SF Mono', monospace !important;
+  font-size: 11px !important;
+  color: #b8cad6 !important;
+  caret-color: #f0a000 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.ai-intel-input::placeholder {
+  color: rgba(240, 160, 0, 0.3) !important;
+  font-style: italic;
+}
+
+.ai-intel-icon {
+  color: rgba(240, 160, 0, 0.4) !important;
+  opacity: 1 !important;
+}
+
+.ai-intel-bar:focus-within .ai-intel-icon {
+  color: #f0a000 !important;
+}
+
+.ai-intel-result.visible {
+  border-top: 1px solid rgba(240, 160, 0, 0.18) !important;
+  color: #8a9ca6 !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 11px !important;
+}
+
+.ai-intel-result.visible::before {
+  color: #f0a000 !important;
+}
+
+.ai-intel-spinner {
+  border: 1.5px solid rgba(240, 160, 0, 0.15) !important;
+  border-top-color: #f0a000 !important;
+}
+
+.ai-intel-hint {
+  background: rgba(240, 160, 0, 0.06) !important;
+  border: 1px solid rgba(240, 160, 0, 0.14) !important;
+  border-radius: 0 !important;
+  color: rgba(240, 160, 0, 0.5) !important;
+}
+
+/* ── Map vignette: void edges ── */
+.map-container::after {
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.22) 78%,
+      rgba(0, 0, 0, 0.55) 100%
+    ) !important;
+}
+
+/* ── Panel scan-lines: tighter for CRT feel ── */
+.panel::before {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(240, 160, 0, 0.012) 2px,
+    rgba(240, 160, 0, 0.012) 3px
+  ) !important;
+}
+
+/* ── Site footer ── */
+.site-footer {
+  border-top: 1px solid rgba(240, 160, 0, 0.08) !important;
+  background: #000000 !important;
+}
+
+.site-footer-name {
+  font-family: 'Courier New', monospace !important;
+  letter-spacing: 0.15em !important;
+  color: rgba(240, 160, 0, 0.4) !important;
+  font-weight: 700 !important;
+}
+
+.site-footer-sub,
+.site-footer-copy {
+  font-family: 'Courier New', monospace !important;
+  color: rgba(240, 160, 0, 0.2) !important;
+  opacity: 1 !important;
+}
+
+/* ── 2D/3D toggle: amber ── */
+.map-dim-btn.active {
+  background: rgba(240, 160, 0, 0.15) !important;
+  color: #f0a000 !important;
+  border-color: rgba(240, 160, 0, 0.4) !important;
+}
+
+/* ── Panel resize handle: amber ── */
+.panel-resize-handle:hover,
+.panel-resize-handle.active {
+  background: linear-gradient(to top, rgba(240, 160, 0, 0.28), transparent) !important;
+}
+
+/* ── Tooltip / popover: terminal ── */
+[class*="tooltip"],
+[class*="popover"] {
+  background: rgba(3, 3, 3, 0.99) !important;
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Map dimension toggle container ── */
+.map-dimension-toggle {
+  border: 1px solid rgba(240, 160, 0, 0.2) !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+
+.map-dim-btn {
+  font-family: 'Courier New', monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 0 !important;
+  color: rgba(240, 160, 0, 0.45) !important;
+}
+
+/* ── Country intel card on right panel: terminal readout ── */
+.cdp-card,
+.cdp-card-body,
+[class*="cdp-"],
+[class*="country-"],
+[class*="intelligence"] {
+  font-family: 'Courier New', monospace !important;
+  border-radius: 0 !important;
+}
+
+.cdp-card-title,
+[class*="cdp-card-title"] {
+  font-family: 'Courier New', monospace !important;
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.14em !important;
+  color: rgba(240, 160, 0, 0.55) !important;
+}
+
+/* ── Mobile menu: black terminal ── */
+.mobile-menu {
+  background: #000000 !important;
+  border-right: 1px solid rgba(240, 160, 0, 0.18) !important;
+}
+
+.mobile-menu-title {
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #f0a000 !important;
+}
+
+/* ── Buttons: sharp ── */
+button {
+  border-radius: 0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ── Map header panel title text ── */
+.panel-header .panel-title {
+  color: rgba(240, 160, 0, 0.6) !important;
+}
+
+/* ── Tighter panel entrance ── */
+@keyframes signal-panel-enter {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── CRT body-level scan-line overlay ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 3px
+  );
+  opacity: 0.4;
+}
