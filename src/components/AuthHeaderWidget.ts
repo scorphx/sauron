@@ -39,12 +39,6 @@ export class AuthHeaderWidget {
     this.container.innerHTML = '';
 
     if (!state.user) {
-      // Signed out -- show Sign In button
-      const btn = document.createElement('button');
-      btn.className = 'auth-signin-btn';
-      btn.textContent = 'Sign In';
-      btn.addEventListener('click', () => openSignIn());
-      this.container.appendChild(btn);
       return;
     }
 
