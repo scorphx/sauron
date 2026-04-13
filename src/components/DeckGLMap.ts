@@ -549,13 +549,14 @@ export class DeckGLMap {
     this.maplibreMap?.on('load', () => {
       localizeMapLabels(this.maplibreMap);
       // Globe atmosphere — void space background with teal horizon glow
-      this.maplibreMap?.setFog({
+      // @ts-expect-error -- setFog is valid in MapLibre v5 but missing from shipped types
+      (this.maplibreMap as any)?.setFog({
         color: 'rgba(2, 8, 20, 0.9)',
         'high-color': '#000814',
         'horizon-blend': 0.06,
         'space-color': '#000000',
         'star-intensity': 0.25,
-      } as maplibregl.FogSpecification);
+      });
       this.initDeck();
       this.loadCountryBoundaries();
       this.fetchServerBases();
@@ -767,14 +768,14 @@ export class DeckGLMap {
       });
       this.maplibreMap.on('load', () => {
         localizeMapLabels(this.maplibreMap);
-        this.maplibreMap?.setFog({
+        // @ts-expect-error -- setFog is valid in MapLibre v5 but missing from shipped types
+        (this.maplibreMap as any)?.setFog({
           color: 'rgba(2, 8, 20, 0.9)',
           'high-color': '#000814',
           'horizon-blend': 0.06,
           'space-color': '#000000',
           'star-intensity': 0.25,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
+        });
         this.initDeck();
         this.loadCountryBoundaries();
         this.fetchServerBases();
