@@ -6,10 +6,10 @@ export interface CryptoIntelStats { chains: number; abuseReports: number; largeT
 export interface GetCryptoIntelRequest { chain: string; }
 export interface GetCryptoIntelResponse { chainStats: Record<string, ChainStats>; abuseReports: CryptoAbuseReport[]; largeTransfers: LargeTransfer[]; stats: CryptoIntelStats; fetchedAt: string; }
 export interface ServerContext { request: Request; }
-export interface ServerOptions { onError?: (err: unknown) => Response; }
+export interface ServerOptions { onError?: (error: unknown, req: Request) => Response | Promise<Response>; }
 export interface RouteDescriptor { method: string; path: string; handler: (req: Request) => Promise<Response>; }
 export interface CryptoIntelServiceHandler { getCryptoIntel(ctx: ServerContext, req: GetCryptoIntelRequest): Promise<GetCryptoIntelResponse>; }
-function defaultError(err: unknown): Response { console.error('[crypto-intel]', err); return new Response(JSON.stringify({ error: 'internal' }), { status: 500, headers: { 'content-type': 'application/json' } }); }
+function defaultError(err: unknown, _req?: Request): Response { console.error('[crypto-intel]', err); return new Response(JSON.stringify({ error: 'internal' }), { status: 500, headers: { 'content-type': 'application/json' } }); }
 export function createCryptoIntelServiceRoutes(handler: CryptoIntelServiceHandler, options?: ServerOptions): RouteDescriptor[] {
   const onError = options?.onError ?? defaultError;
   return [{ method: "GET", path: "/api/crypto-intel/v1/get-crypto-intel",
@@ -19,7 +19,7 @@ export function createCryptoIntelServiceRoutes(handler: CryptoIntelServiceHandle
         const body: GetCryptoIntelRequest = { chain: p.get('chain') ?? '' };
         const resp = await handler.getCryptoIntel({ request: req }, body);
         return new Response(JSON.stringify(resp), { headers: { 'content-type': 'application/json' } });
-      } catch (err) { return onError(err); }
+      } catch (err) { return onError(err, req); }
     },
   }];
 }
